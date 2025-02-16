@@ -37,23 +37,35 @@ Elon: Always! But right now, I'm particularly excited about Neuralink. It has th
 const formSchema = z.object({
   name: z.string().min(1, {
     message: "Name is required.",
+  }).refine((value) => value.trim().length > 0, {
+    message: "Name cannot be empty or just spaces."
   }),
   description: z.string().min(1, {
     message: "Description is required.",
+  }).refine((value) => value.trim().length > 0, {
+    message: "Description cannot be empty or just spaces."
   }),
   instructions: z.string().min(200, {
     message: "Instructions require at least 200 characters."
+  }).refine((value) => value.trim().length >= 200, {
+    message: "Instructions cannot be just spaces and must be at least 200 characters."
   }),
   seed: z.string().min(200, {
     message: "Seed requires at least 200 characters."
+  }).refine((value) => value.trim().length >= 200, {
+    message: "Example conversation cannot be just spaces and must be at least 200 characters."
   }),
   src: z.string().min(1, {
     message: "Image is required."
+  }).refine((value) => value.trim().length > 0, {
+    message: "Image URL cannot be empty."
   }),
   categoryId: z.string().min(1, {
     message: "Category is required",
+  }).refine((value) => value.trim().length > 0, {
+    message: "Please select a valid category."
   }),
-  private: z.boolean().default(false),
+  private: z.boolean(),
 });
 
 interface CompanionFormProps {

@@ -98,26 +98,39 @@ export const Companions = ({
         ))}
       </div>
       {totalPages > 1 && (
-        <div className="flex justify-center gap-2 pt-4">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <div className="flex items-center text-sm text-muted-foreground">
-            Page {currentPage} of {totalPages}
+        <div className="flex justify-center gap-4 pt-4">
+          {currentPage > 1 && (
+            <Button
+              variant="secondary"
+              size="icon"
+              className="rounded-full w-10 h-10 p-2 bg-[#C0C1C3] hover:bg-[#B0B1B3] dark:bg-[#505052] dark:hover:bg-[#606062]"
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+          )}
+          <div className="flex items-center gap-4">
+            {[...Array(totalPages)].map((_, index) => (
+              <Button
+                key={index + 1}
+                variant={currentPage === index + 1 ? "default" : "outline"}
+                className="rounded-full w-10 h-10 p-0"
+                onClick={() => setCurrentPage(index + 1)}
+              >
+                {index + 1}
+              </Button>
+            ))}
           </div>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+          {currentPage < totalPages && (
+            <Button
+              variant="secondary"
+              size="icon"
+              className="rounded-full w-10 h-10 p-2 bg-[#C0C1C3] hover:bg-[#B0B1B3] dark:bg-[#505052] dark:hover:bg-[#606062]"
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       )}
       <div className="flex justify-center gap-2 mt-4"></div>
