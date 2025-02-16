@@ -7,15 +7,19 @@ import { absoluteUrl } from "@/lib/utils";
 
 const settingsUrl = absoluteUrl("/settings");
 
-export async function GET() {
+export async function POST(req: Request) {
   try {
     const { userId } = auth();
     const user = await currentUser();
+    const { unitAmount } = await req.json();
 
     if (!userId || !user) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
-    
+
+    if (!unitAmount || isNaN(unitAmount)) {
+      return new NextResponse("Invalid unit amount", { status: 400 });
+    }
 
     const userSubscription = await prismadb.userSubscription.findUnique({
       where: {
@@ -47,7 +51,7 @@ export async function GET() {
               name: "Companion Pro",
               description: "Create Custom AI Companions"
             },
-            unit_amount: 999,
+            unit_amount: unitAmount,
             recurring: {
               interval: "month"
             }

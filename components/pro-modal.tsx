@@ -21,18 +21,24 @@ export const ProModal = () => {
   const [isMounted, setIsMounted] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const [selectedPlan, setSelectedPlan] = useState<'starter'|'pro'|'ultimate'>('starter');
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
+  const prices = {
+    starter: 999,
+    pro: 2999,
+    ultimate: 4999
+  };
 
   const onSubscribe = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("/api/stripe");
-
-      console.log("response", response)
+      const response = await axios.post("/api/stripe", {
+        unitAmount: prices[selectedPlan]
+      });
 
       window.location.href = response.data.url;
     } catch (error) {
@@ -51,24 +57,101 @@ export const ProModal = () => {
 
   return (
     <Dialog open={proModal.isOpen} onOpenChange={proModal.onClose}>
-      <DialogContent>
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader className="space-y-4">
           <DialogTitle className="text-center">
-            Upgrade to Pro
+            Choose Your Plan
           </DialogTitle>
-          <DialogDescription className="text-center space-y-2">
-            Create
-            <span className="text-sky-500 mx-1 font-medium">Custom AI</span>
-            Companions!
+          <DialogDescription className="text-center">
+            Unlock the full potential of AI Companions
           </DialogDescription>
         </DialogHeader>
         <Separator />
-        <div className="flex justify-between">
-          <p className="text-2xl font-medium">
-            $9<span className="text-sm font-normal">.99 / mo</span>
-          </p>
-          <Button onClick={onSubscribe} disabled={loading} variant="premium">
-            Subscribe
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Starter Plan */}
+          <div 
+            onClick={() => setSelectedPlan('starter')}
+            className={`p-4 border rounded-lg cursor-pointer transition-all hover:shadow-md 
+              ${selectedPlan === 'starter' 
+                ? 'border-sky-500 bg-sky-500/10 dark:bg-sky-500/20' 
+                : 'border-gray-200 dark:border-gray-800 hover:border-sky-500/50 dark:hover:border-sky-500/50'
+              }`}
+          >
+            <div className="flex flex-col items-center mb-4">
+              <h3 className="font-semibold text-lg text-foreground">Starter Plan</h3>
+              <Button 
+                variant={selectedPlan === 'starter' ? "premium" : "outline"}
+                className="w-full mt-2 pointer-events-none"
+              >
+                $9.99/mo
+              </Button>
+            </div>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p>✨ Access to all prebuilt bots</p>
+              <p>✨ Unlimited chat messages</p>
+              <p>✨ No ads</p>
+            </div>
+          </div>
+
+          {/* Pro Plan */}
+          <div 
+            onClick={() => setSelectedPlan('pro')}
+            className={`p-4 border rounded-lg cursor-pointer transition-all hover:shadow-md 
+              ${selectedPlan === 'pro' 
+                ? 'border-sky-500 bg-sky-500/10 dark:bg-sky-500/20' 
+                : 'border-gray-200 dark:border-gray-800 hover:border-sky-500/50 dark:hover:border-sky-500/50'
+              }`}
+          >
+            <div className="flex flex-col items-center mb-4">
+              <h3 className="font-semibold text-lg text-foreground">Pro Plan</h3>
+              <Button 
+                variant={selectedPlan === 'pro' ? "premium" : "outline"}
+                className="w-full mt-2 pointer-events-none"
+              >
+                $29.99/mo
+              </Button>
+            </div>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p>🔥 Everything in Starter, plus:</p>
+              <p>🔥 Up to 5 personal bots</p>
+              <p>🔥 Customizable bot personalities</p>
+            </div>
+          </div>
+
+          {/* Ultimate Plan */}
+          <div 
+            onClick={() => setSelectedPlan('ultimate')}
+            className={`p-4 border rounded-lg cursor-pointer transition-all hover:shadow-md 
+              ${selectedPlan === 'ultimate' 
+                ? 'border-sky-500 bg-sky-500/10 dark:bg-sky-500/20' 
+                : 'border-gray-200 dark:border-gray-800 hover:border-sky-500/50 dark:hover:border-sky-500/50'
+              }`}
+          >
+            <div className="flex flex-col items-center mb-4">
+              <h3 className="font-semibold text-lg text-foreground">Ultimate Plan</h3>
+              <Button 
+                variant={selectedPlan === 'ultimate' ? "premium" : "outline"}
+                className="w-full mt-2 pointer-events-none"
+              >
+                $49.99/mo
+              </Button>
+            </div>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p>⚡ Everything in Pro, plus:</p>
+              <p>⚡ Unlimited personal bots</p>
+              <p>⚡ Priority customer support</p>
+            </div>
+          </div>
+        </div>
+        <div className="sticky bottom-0 bg-background pt-4">
+          <Separator className="mb-4" />
+          <Button 
+            onClick={onSubscribe} 
+            disabled={loading} 
+            variant="premium" 
+            className="w-full"
+          >
+            Subscribe to {selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)} Plan
           </Button>
         </div>
       </DialogContent>
