@@ -1,9 +1,7 @@
 import dotenv from "dotenv";
-import { StreamingTextResponse, LangChainStream } from "ai";
 import { auth, currentUser } from "@clerk/nextjs";
-import { Replicate } from "langchain/llms/replicate";
-import { CallbackManager } from "langchain/callbacks";
 import { NextResponse } from "next/server";
+import OpenAI from "openai";
 
 import { MemoryManager } from "@/lib/memory";
 import { rateLimit } from "@/lib/rate-limit";
@@ -30,81 +28,53 @@ export async function POST(
       return new NextResponse("Rate limit exceeded", { status: 429 });
     }
 
-    const companion = await prismadb.companion.update({
+    // const companion = await prismadb.companion.update({
+    //   where: {
+    //     id: params.chatId
+    //   },
+    //   data: {
+    //     messages: {
+    //       create: {
+    //         content: prompt,
+    //         role: "user",
+    //         userId: user.id,
+    //       },
+    //     },
+    //   }
+    // });
+
+    const companion = await prismadb.companion.findUnique({
       where: {
-        id: params.chatId
+        id: params.chatId,
       },
-      data: {
-        messages: {
-          create: {
-            content: prompt,
-            role: "user",
-            userId: user.id,
-          },
-        },
-      }
     });
 
     if (!companion) {
       return new NextResponse("Companion not found", { status: 404 });
     }
 
-    const { handlers } = LangChainStream();
-    
-    const model = new Replicate({
-      model: "a16z-infra/llama-2-13b-chat:df7690f1994d94e96ad9d568eac121aecf50684a0b0963b25a41cc40061269e5",
-      input: {
-        max_length: 2048,
-      },
-      apiKey: process.env.REPLICATE_API_TOKEN,
-      callbackManager: CallbackManager.fromHandlers(handlers),
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY || "",
     });
 
-    model.verbose = true;
-
-    const resp = String(
-      await model
-        .call(
-          `
-        ONLY generate plain sentences without prefix of who is speaking. DO NOT use ${companion.name}: prefix. 
-
-        ${companion.instructions}
-
-        User: ${prompt}
-        ${companion.name}:`
-        )
-        .catch(console.error)
-    );
-
-    const cleaned = resp.replaceAll(",", "");
-    const chunks = cleaned.split("\n");
-    const response = chunks[0];
-
-    var Readable = require("stream").Readable;
-    let s = new Readable();
-    s.push(response);
-    s.push(null);
-
-    if (response !== undefined && response.length > 1) {
-      await prismadb.companion.update({
-        where: {
-          id: params.chatId
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: `${companion.instructions}\n\nYou are ${companion.name}, ${companion.description}\n\nSeed personality: ${companion.seed}`,
         },
-        data: {
-          messages: {
-            create: {
-              content: response.trim(),
-              role: "system",
-              userId: user.id,
-            },
-          },
-        }
-      });
-    }
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      stream: false,
+    });
 
-    return new StreamingTextResponse(s);
+    return new NextResponse(response.choices[0].message.content);
   } catch (error) {
-    console.log('Error in POST route:', error);
+    console.log("Error in POST route:", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

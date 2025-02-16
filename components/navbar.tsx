@@ -32,12 +32,12 @@ export const Navbar = ({
         </Link>
       </div>
       <div className="flex items-center gap-x-3">
-        {/* {!isPro && (
+        {!isPro && (
           <Button onClick={proModal.onOpen} size="sm" variant="premium">
             Upgrade
             <Sparkles className="h-4 w-4 fill-white text-white ml-2" />
           </Button>
-        )} */}
+        )}
         <ModeToggle />
         <UserButton afterSignOutUrl="/" />
       </div>
