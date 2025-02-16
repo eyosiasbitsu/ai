@@ -18,50 +18,64 @@ export async function POST(req: Request) {
       process.env.STRIPE_WEBHOOK_SECRET!
     )
   } catch (error: any) {
+    console.log("[WEBHOOK_ERROR]", error);
     return new NextResponse(`Webhook Error: ${error.message}`, { status: 400 })
   }
 
-  const session = event.data.object as Stripe.Checkout.Session
+  const session = event.data.object as Stripe.Checkout.Session | Stripe.Invoice
 
-  if (event.type === "checkout.session.completed") {
-    const subscription = await stripe.subscriptions.retrieve(
-      session.subscription as string
-    )
+  try {
+    if (event.type === "checkout.session.completed") {
+      if (!session || typeof session.subscription !== 'string') {
+        return new NextResponse("Invalid session or subscription", { status: 400 });
+      }
 
-    if (!session?.metadata?.userId) {
-      return new NextResponse("User id is required", { status: 400 });
+      const subscription = await stripe.subscriptions.retrieve(
+        session.subscription
+      )
+
+      if (!session?.metadata?.userId) {
+        return new NextResponse("User id is required", { status: 400 });
+      }
+
+      await prismadb.userSubscription.create({
+        data: {
+          userId: session.metadata.userId,
+          stripeSubscriptionId: subscription.id,
+          stripeCustomerId: subscription.customer as string,
+          stripePriceId: subscription.items.data[0].price.id,
+          stripeCurrentPeriodEnd: new Date(
+            subscription.current_period_end * 1000
+          ),
+        },
+      })
     }
 
-    await prismadb.userSubscription.create({
-      data: {
-        userId: session?.metadata?.userId,
-        stripeSubscriptionId: subscription.id,
-        stripeCustomerId: subscription.customer as string,
-        stripePriceId: subscription.items.data[0].price.id,
-        stripeCurrentPeriodEnd: new Date(
-          subscription.current_period_end * 1000
-        ),
-      },
-    })
+    if (event.type === "invoice.payment_succeeded") {
+      if (!session || typeof session.subscription !== 'string') {
+        return new NextResponse("Invalid session or subscription", { status: 400 });
+      }
+
+      const subscription = await stripe.subscriptions.retrieve(
+        session.subscription
+      )
+
+      await prismadb.userSubscription.update({
+        where: {
+          stripeSubscriptionId: subscription.id,
+        },
+        data: {
+          stripePriceId: subscription.items.data[0].price.id,
+          stripeCurrentPeriodEnd: new Date(
+            subscription.current_period_end * 1000
+          ),
+        },
+      })
+    }
+
+    return new NextResponse(null, { status: 200 })
+  } catch (error) {
+    console.log("[WEBHOOK_ERROR]", error);
+    return new NextResponse("Internal Error", { status: 500 });
   }
-
-  if (event.type === "invoice.payment_succeeded") {
-    const subscription = await stripe.subscriptions.retrieve(
-      session.subscription as string
-    )
-
-    await prismadb.userSubscription.update({
-      where: {
-        stripeSubscriptionId: subscription.id,
-      },
-      data: {
-        stripePriceId: subscription.items.data[0].price.id,
-        stripeCurrentPeriodEnd: new Date(
-          subscription.current_period_end * 1000
-        ),
-      },
-    })
-  }
-
-  return new NextResponse(null, { status: 200 })
 };

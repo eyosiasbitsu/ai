@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { Wand2 } from "lucide-react";
 import { Category, Companion } from "@prisma/client";
+import { Switch } from "@/components/ui/switch";
 
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -52,6 +53,7 @@ const formSchema = z.object({
   categoryId: z.string().min(1, {
     message: "Category is required",
   }),
+  private: z.boolean().default(false),
 });
 
 interface CompanionFormProps {
@@ -75,6 +77,7 @@ export const CompanionForm = ({
       seed: "",
       src: "",
       categoryId: undefined,
+      private: false,
     },
   });
 
@@ -105,17 +108,17 @@ export const CompanionForm = ({
   };
 
   return ( 
-    <div className="h-full p-4 space-y-2 max-w-3xl mx-auto">
+    <div className="h-full w-full">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 pb-10">
           <div className="space-y-2 w-full col-span-2">
             <div>
-              <h3 className="text-lg font-medium">General Information</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="text-xl font-semibold text-slate-900 dark:text-zinc-100">General Information</h3>
+              <p className="text-sm text-slate-500 dark:text-zinc-400">
                 General information about your Companion
               </p>
             </div>
-            <Separator className="bg-primary/10" />
+            <Separator className="bg-slate-200 dark:bg-zinc-700" />
           </div>
           <FormField
             name="src"
@@ -136,7 +139,12 @@ export const CompanionForm = ({
                 <FormItem className="col-span-2 md:col-span-1">
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input disabled={isLoading} placeholder="Elon Musk" {...field} />
+                    <Input 
+                      disabled={isLoading} 
+                      placeholder="Elon Musk" 
+                      className="bg-white dark:bg-[#27272A] border-slate-200 dark:border-zinc-700"
+                      {...field} 
+                    />
                   </FormControl>
                   <FormDescription>
                     This is how your AI Companion will be named.
@@ -149,10 +157,15 @@ export const CompanionForm = ({
               name="description"
               control={form.control}
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="col-span-2 md:col-span-1">
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Input disabled={isLoading} placeholder="CEO & Founder of Tesla, SpaceX" {...field} />
+                    <Input 
+                      disabled={isLoading} 
+                      placeholder="CEO & Founder of Tesla, SpaceX" 
+                      className="bg-white dark:bg-[#27272A] border-slate-200 dark:border-zinc-700"
+                      {...field} 
+                    />
                   </FormControl>
                   <FormDescription>
                     Short description for your AI Companion
@@ -169,11 +182,11 @@ export const CompanionForm = ({
                   <FormLabel>Category</FormLabel>
                   <Select disabled={isLoading} onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger className="bg-background">
+                      <SelectTrigger className="bg-white dark:bg-[#27272A] border-slate-200 dark:border-zinc-700">
                         <SelectValue defaultValue={field.value} placeholder="Select a category" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent className="bg-white dark:bg-[#27272A] border-slate-200 dark:border-zinc-700">
                       {categories.map((category) => (
                         <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
                       ))}
@@ -189,12 +202,12 @@ export const CompanionForm = ({
           </div>
           <div className="space-y-2 w-full">
             <div>
-              <h3 className="text-lg font-medium">Configuration</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="text-xl font-semibold text-slate-900 dark:text-zinc-100">Configuration</h3>
+              <p className="text-sm text-slate-500 dark:text-zinc-400">
                 Detailed instructions for AI Behaviour
               </p>
             </div>
-            <Separator className="bg-primary/10" />
+            <Separator className="bg-slate-200 dark:bg-zinc-700" />
           </div>
           <FormField
             name="instructions"
@@ -203,7 +216,13 @@ export const CompanionForm = ({
               <FormItem>
                 <FormLabel>Instructions</FormLabel>
                 <FormControl>
-                  <Textarea disabled={isLoading} rows={7} className="bg-background resize-none" placeholder={PREAMBLE} {...field} />
+                  <Textarea 
+                    disabled={isLoading} 
+                    rows={7} 
+                    className="resize-none bg-white dark:bg-[#27272A] border-slate-200 dark:border-zinc-700" 
+                    placeholder={PREAMBLE} 
+                    {...field} 
+                  />
                 </FormControl>
                 <FormDescription>
                   Describe in detail your companion&apos;s backstory and relevant details.
@@ -219,7 +238,13 @@ export const CompanionForm = ({
               <FormItem>
                 <FormLabel>Example Conversation</FormLabel>
                 <FormControl>
-                  <Textarea disabled={isLoading} rows={7} className="bg-background resize-none" placeholder={SEED_CHAT} {...field} />
+                  <Textarea 
+                    disabled={isLoading} 
+                    rows={7} 
+                    className="resize-none bg-white dark:bg-[#27272A] border-slate-200 dark:border-zinc-700" 
+                    placeholder={SEED_CHAT} 
+                    {...field} 
+                  />
                 </FormControl>
                 <FormDescription>
                   Write couple of examples of a human chatting with your AI companion, write expected answers.
@@ -228,8 +253,33 @@ export const CompanionForm = ({
               </FormItem>
             )}
           />
+          <FormField
+            name="private"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border border-slate-200 dark:border-zinc-700 p-4 shadow-sm bg-white dark:bg-[#27272A]">
+                <div className="space-y-0.5">
+                  <FormLabel>Private Companion</FormLabel>
+                  <FormDescription>
+                    Make this companion private and visible only to you
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    disabled={isLoading}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
           <div className="w-full flex justify-center">
-            <Button size="lg" disabled={isLoading}>
+            <Button 
+              size="lg" 
+              disabled={isLoading}
+              className="bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+            >
               {initialData ? "Edit your companion" : "Create your companion"}
               <Wand2 className="w-4 h-4 ml-2" />
             </Button>

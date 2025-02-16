@@ -1,7 +1,11 @@
+"use client"
+
 import Image from "next/image"
 import Link from "next/link"
 import { Companion } from "@prisma/client"
-import { MessagesSquare } from "lucide-react";
+import { MessagesSquare, ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import React from "react";
 
 import { Card, CardFooter, CardHeader } from "@/components/ui/card"
 
@@ -11,11 +15,43 @@ interface CompanionsProps {
       messages: number
     },
   })[];
+  userId?: string;
 }
 
 export const Companions = ({
-  data
+  data,
+  userId
 }: CompanionsProps) => {
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [isMobile, setIsMobile] = React.useState(false);
+  
+  React.useEffect(() => {
+    setIsMobile(window.innerWidth < 640);
+    
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Add useEffect for scroll to top when page changes
+  React.useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  }, [currentPage]);
+
+  const companionsPerPage = isMobile ? 7 : 10;
+
+  // No more filtering needed here since it's handled in the database query
+  const indexOfLastCompanion = currentPage * companionsPerPage;
+  const indexOfFirstCompanion = indexOfLastCompanion - companionsPerPage;
+  const currentCompanions = data.slice(indexOfFirstCompanion, indexOfLastCompanion);
+  const totalPages = Math.ceil(data.length / companionsPerPage);
+
   if (data.length === 0) {
     return (
       <div className="pt-10 flex flex-col items-center justify-center space-y-3">
@@ -33,36 +69,58 @@ export const Companions = ({
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 pb-10">
-      {data.map((item) => (
-        <Card key={item.name} className="bg-primary/10 rounded-xl cursor-pointer hover:opacity-75 transition border-0">
-          <Link href={`/chat/${item.id}`}>
-            <CardHeader className="flex items-center justify-center text-center text-muted-foreground">
-              <div className="relative w-32 h-32">
-                <Image
-                  src={item.src}
-                  fill
-                  className="rounded-xl object-cover"
-                  alt="Character"
-                />
-              </div>
-              <p className="font-bold">
-                {item.name}
-              </p>
-              <p className="text-xs">
-                {item.description}
-              </p>
-            </CardHeader>
-            <CardFooter className="flex items-center justify-between text-xs text-muted-foreground">
-              <p className="lowercase">@{item.userName}</p>
-              <div className="flex items-center">
-                <MessagesSquare className="w-3 h-3 mr-1" />
-                {item._count.messages}
-              </div>
-            </CardFooter>
-          </Link>
-        </Card>
-      ))}
+    <div className="space-y-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 px-4">
+        {currentCompanions.map((item) => (
+          <Card key={item.name} className="bg-[#DEDEDE] dark:bg-zinc-800 rounded-2xl cursor-pointer border-2 border-zinc-300/50 dark:border-zinc-700 shadow-lg overflow-hidden flex flex-col h-full">
+            <Link href={`/chat/${item.id}`} className="flex flex-col h-full">
+              <CardHeader className="flex items-center justify-center text-center p-4 space-y-3">
+                <div className="relative w-32 h-32">
+                  <Image
+                    src={item.src}
+                    fill
+                    className="rounded-2xl object-cover shadow-md"
+                    alt="Character"
+                  />
+                </div>
+                <p className="font-semibold text-lg text-zinc-800 dark:text-foreground">
+                  {item.name}
+                </p>
+                <p className="text-xs text-zinc-600 dark:text-muted-foreground line-clamp-2">
+                  {item.description}
+                </p>
+              </CardHeader>
+              <CardFooter className="flex items-center justify-between px-4 py-3 border-t border-zinc-300/50 dark:border-zinc-700 bg-[#BDBDBD] dark:bg-zinc-900/50 mt-auto">
+                <p className="text-xs text-zinc-600 dark:text-muted-foreground font-medium">@{item.userName}</p>
+              </CardFooter>
+            </Link>
+          </Card>
+        ))}
+      </div>
+      {totalPages > 1 && (
+        <div className="flex justify-center gap-2 pt-4">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <div className="flex items-center text-sm text-muted-foreground">
+            Page {currentPage} of {totalPages}
+          </div>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+      <div className="flex justify-center gap-2 mt-4"></div>
     </div>
   )
 }

@@ -2,6 +2,7 @@ import prismadb from "@/lib/prismadb"
 import { Categories } from "@/components/categories"
 import { Companions } from "@/components/companions"
 import { SearchInput } from "@/components/search-input"
+import { auth, redirectToSignIn } from "@clerk/nextjs";
 
 interface RootPageProps {
   searchParams: {
@@ -13,12 +14,32 @@ interface RootPageProps {
 const RootPage = async ({
   searchParams
 }: RootPageProps) => {
+  const { userId } = auth();
+
+  if (!userId) {
+    return redirectToSignIn();
+  }
+
   const data = await prismadb.companion.findMany({
     where: {
-      categoryId: searchParams.categoryId,
-      name: {
-        search: searchParams.name,
-      },
+      AND: [
+        {
+          categoryId: searchParams.categoryId || undefined,
+          name: searchParams.name ? {
+            contains: searchParams.name,
+            mode: 'insensitive',
+          } : undefined,
+        },
+        {
+          OR: [
+            { private: false },  // Show all public companions
+            { AND: [            // Show private companions only if they belong to the user
+              { private: true },
+              { userId: userId }
+            ]}
+          ]
+        }
+      ]
     },
     orderBy: {
       createdAt: "desc"
@@ -38,7 +59,7 @@ const RootPage = async ({
     <div className="h-full p-4 space-y-2">
       <SearchInput />
       <Categories data={categories} />
-      <Companions data={data} />
+      <Companions userId={userId} data={data} />
     </div>
   )
 }
