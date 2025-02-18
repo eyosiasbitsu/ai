@@ -23,6 +23,7 @@ model Companion {
   instructions  String @db.Text
   seed          String @db.Text
   private       Boolean @default(false)
+  isFree        Boolean @default(false)
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -55,6 +56,16 @@ model Message {
   @@index([companionId])
 }
 
+model DailyMessageCount {
+  id          String   @id @default(uuid())
+  userId      String
+  date        DateTime @default(now())
+  count       Int      @default(0)
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
 model UserSubscription {
   id                        String    @id @default(cuid())
   userId                    String    @unique
@@ -62,5 +73,5 @@ model UserSubscription {
   stripeSubscriptionId      String?   @unique @map(name: "stripe_subscription_id")
   stripePriceId             String?   @map(name: "stripe_price_id")
   stripeCurrentPeriodEnd    DateTime? @map(name: "stripe_current_period_end")
-  price                     Float    @map(name: "price")
+  price                     Float     @map(name: "price")
 }

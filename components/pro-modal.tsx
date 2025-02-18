@@ -88,6 +88,7 @@ export const ProModal = () => {
             </div>
             <div className="space-y-2 text-sm text-muted-foreground">
               <p>✨ Access to all prebuilt bots</p>
+              {/* 50 messages no bots */}
               <p>✨ Unlimited chat messages</p>
               <p>✨ No ads</p>
             </div>
@@ -112,7 +113,8 @@ export const ProModal = () => {
               </Button>
             </div>
             <div className="space-y-2 text-sm text-muted-foreground">
-              <p>🔥 Everything in Starter, plus:</p>
+              <p>🔥 Everything in Starter, plus:</p>  
+              {/* 100 mesages 5 bots */}
               <p>🔥 Up to 5 personal bots</p>
               <p>🔥 Customizable bot personalities</p>
             </div>

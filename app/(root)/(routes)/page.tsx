@@ -3,6 +3,7 @@ import { Categories } from "@/components/categories"
 import { Companions } from "@/components/companions"
 import { SearchInput } from "@/components/search-input"
 import { auth, redirectToSignIn } from "@clerk/nextjs";
+import { checkSubscription } from "@/lib/subscription";
 
 interface RootPageProps {
   searchParams: {
@@ -15,6 +16,8 @@ const RootPage = async ({
   searchParams
 }: RootPageProps) => {
   const { userId } = auth();
+  const isPro = await checkSubscription();
+
 
   if (!userId) {
     return redirectToSignIn();
@@ -38,7 +41,11 @@ const RootPage = async ({
               { userId: userId }
             ]}
           ]
-        }
+        },
+        // Add filter for free companions if user is not PRO
+        ...(!isPro ? [{
+          isFree: true
+        }] : [])
       ]
     },
     orderBy: {

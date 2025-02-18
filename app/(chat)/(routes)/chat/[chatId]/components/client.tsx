@@ -4,6 +4,7 @@ import { useCompletion } from "ai/react";
 import { FormEvent, useState } from "react";
 import { Companion, Message } from "@prisma/client";
 import { useRouter } from "next/navigation";
+import { useChatLimit } from "@/store/use-chat-limit";
 
 import { ChatForm } from "@/components/chat-form";
 import { ChatHeader } from "@/components/chat-header";
@@ -24,6 +25,7 @@ export const ChatClient = ({
 }: ChatClientProps) => {
   const router = useRouter();
   const [messages, setMessages] = useState<ChatMessageProps[]>(companion.messages);
+  const { decrementRemaining } = useChatLimit();
   
   const {
     input,
@@ -41,6 +43,7 @@ export const ChatClient = ({
 
       setMessages((current) => [...current, systemMessage]);
       setInput("");
+      decrementRemaining();
 
       router.refresh();
     },

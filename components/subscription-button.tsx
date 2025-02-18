@@ -28,19 +28,12 @@ export const SubscriptionButton = ({
         return;
       }
 
-      // const subscription = await getSubscriptionData();
-      
       if (!subscription?.stripeCustomerId) {
         proModal.onOpen();
         return;
       }
 
-      console.log(subscription);
-      
-      const response = await axios.post("/api/stripe", {
-        unitAmount: subscription.price
-      });
-
+      const response = await axios.get("/api/stripe/manage");
       window.location.href = response.data.url;
     } catch (error) {
       console.log(error);

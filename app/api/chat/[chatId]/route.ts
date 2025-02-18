@@ -17,31 +17,16 @@ export async function POST(
     const { prompt } = await request.json();
     const user = await currentUser();
 
-    if (!user || !user.firstName || !user.id) {
+    if (!user || !user.id) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
     const identifier = request.url + "-" + user.id;
-    const { success } = await rateLimit(identifier);
+    const { success } = await rateLimit(user.id);
 
     if (!success) {
       return new NextResponse("Rate limit exceeded", { status: 429 });
     }
-
-    // const companion = await prismadb.companion.update({
-    //   where: {
-    //     id: params.chatId
-    //   },
-    //   data: {
-    //     messages: {
-    //       create: {
-    //         content: prompt,
-    //         role: "user",
-    //         userId: user.id,
-    //       },
-    //     },
-    //   }
-    // });
 
     const companion = await prismadb.companion.findUnique({
       where: {

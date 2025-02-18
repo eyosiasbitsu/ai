@@ -10,14 +10,18 @@ import { MobileSidebar } from "@/components/mobile-sidebar";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Button } from "@/components/ui/button";
 import { useProModal } from "@/hooks/use-pro-modal";
+import { ChatLimit } from "@/components/chat-limit";
 
 const font = Poppins({ weight: "600", subsets: ["latin"] });
+
 interface NavbarProps {
   isPro: boolean;
+  userId: string;
 }
 
 export const Navbar = ({
-  isPro
+  isPro,
+  userId
 }: NavbarProps) => {
   const proModal = useProModal();
 
@@ -32,6 +36,7 @@ export const Navbar = ({
         </Link>
       </div>
       <div className="flex items-center gap-x-3">
+        <ChatLimit userId={userId} />
         {!isPro && (
           <Button onClick={proModal.onOpen} size="sm" variant="premium">
             Upgrade
