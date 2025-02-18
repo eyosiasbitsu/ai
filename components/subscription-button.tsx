@@ -38,7 +38,7 @@ export const SubscriptionButton = ({
       console.log(subscription);
       
       const response = await axios.post("/api/stripe", {
-        stripeCustomerId: subscription.stripeCustomerId
+        unitAmount: subscription.price
       });
 
       window.location.href = response.data.url;
