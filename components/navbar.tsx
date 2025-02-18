@@ -37,9 +37,14 @@ export const Navbar = ({
       </div>
       <div className="flex items-center gap-x-3">
         <ChatLimit userId={userId} />
-        {!isPro && (
+        {!isPro ? (
           <Button onClick={proModal.onOpen} size="sm" variant="premium">
             Upgrade
+            <Sparkles className="h-4 w-4 fill-white text-white ml-2" />
+          </Button>
+        ) : (
+          <Button  size="sm" variant="premium">
+            Manage Subscription
             <Sparkles className="h-4 w-4 fill-white text-white ml-2" />
           </Button>
         )}
