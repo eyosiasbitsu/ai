@@ -9,16 +9,57 @@ import { useToast } from "@/components/ui/use-toast";
 import { useProModal } from "@/hooks/use-pro-modal";
 
 export const SubscriptionButton = ({
-  isPro = false
+  isPro = false,
+  subscription
 }: {
   isPro: boolean;
+  subscription? : any;
 }) => {
-
   const proModal = useProModal();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
 
+  const manageSubscription = async () => {
+    try {
+      setLoading(true);
+      
+      if (!isPro) {
+        proModal.onOpen();
+        return;
+      }
+
+      // const subscription = await getSubscriptionData();
+      
+      if (!subscription?.stripeCustomerId) {
+        proModal.onOpen();
+        return;
+      }
+
+      console.log(subscription);
+      
+      const response = await axios.post("/api/stripe", {
+        stripeCustomerId: subscription.stripeCustomerId
+      });
+
+      window.location.href = response.data.url;
+    } catch (error) {
+      console.log(error);
+      toast({
+        variant: "destructive",
+        description: "Something went wrong. Please try again."
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <Button size="sm" variant={isPro ? "default" : "premium"}  onClick={proModal.onOpen} >
+    <Button 
+      size="sm" 
+      variant={isPro ? "default" : "premium"} 
+      onClick={manageSubscription}
+      disabled={loading}
+    >
       {isPro ? "Manage Subscription" : "Upgrade"}
       {!isPro && <Sparkles className="w-4 h-4 ml-2 fill-white" />}
     </Button>

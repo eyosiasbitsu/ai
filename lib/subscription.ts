@@ -20,6 +20,7 @@ export const checkSubscription = async () => {
       stripeCurrentPeriodEnd: true,
       stripeCustomerId: true,
       stripePriceId: true,
+      price: true,
     },
   })
 
@@ -32,4 +33,31 @@ export const checkSubscription = async () => {
     userSubscription.stripeCurrentPeriodEnd?.getTime()! + DAY_IN_MS > Date.now()
 
   return !!isValid;
+};
+
+export const getSubscriptionData = async () => {
+  const { userId } = auth();
+
+  if (!userId) {
+    return null;
+  }
+
+  const userSubscription = await prismadb.userSubscription.findUnique({
+    where: {
+      userId: userId,
+    },
+    select: {
+      stripeSubscriptionId: true,
+      stripeCurrentPeriodEnd: true,
+      stripeCustomerId: true,
+      stripePriceId: true,
+      price: true,
+    },
+  });
+
+  if (!userSubscription) {
+    return null;
+  }
+
+  return userSubscription;
 };

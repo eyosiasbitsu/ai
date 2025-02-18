@@ -47,6 +47,7 @@ export async function POST(req: Request) {
           stripeCurrentPeriodEnd: new Date(
             subscription.current_period_end * 1000
           ),
+          price: subscription.items.data[0].price.unit_amount!,
         },
       })
     }
@@ -69,6 +70,7 @@ export async function POST(req: Request) {
           stripeCurrentPeriodEnd: new Date(
             subscription.current_period_end * 1000
           ),
+          price: subscription.items.data[0].price.unit_amount!,
         },
       })
     }

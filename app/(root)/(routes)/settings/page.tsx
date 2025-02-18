@@ -1,8 +1,9 @@
 import { SubscriptionButton } from "@/components/subscription-button";
-import { checkSubscription } from "@/lib/subscription";
+import { checkSubscription, getSubscriptionData } from "@/lib/subscription";
 
 const SettingsPage = async () => {
   const isPro = await checkSubscription();
+  const subs =  await getSubscriptionData()
 
   return ( 
     <div className="h-full p-4 space-y-4">
@@ -22,7 +23,7 @@ const SettingsPage = async () => {
             "Upgrade to Pro to unlock all features"
           )}
         </div>
-        <SubscriptionButton isPro={isPro} />
+        <SubscriptionButton subscription={subs} isPro={isPro} />
       </div>
     </div>
    );
