@@ -65,7 +65,7 @@ export async function POST(req: Request) {
           data: {
             userId: id,
             totalSpent: 0,
-            level: 1,
+            level: 0,
             availableTokens: 100, // Starting tokens
           }
         });

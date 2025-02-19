@@ -80,7 +80,7 @@ model UserUsage {
   id              String    @id @default(cuid())
   userId          String    @unique
   totalSpent      Float     @default(0)      // Total money spent
-  level           Int       @default(1)       // Current level
+  level           Int       @default(0)       // Current level
   availableTokens Int       @default(100)    // Free tokens to start
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
