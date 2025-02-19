@@ -18,11 +18,35 @@ export async function POST(req: Request) {
       return new NextResponse("Missing required fields", { status: 400 });
     };
 
-    const isPro = await checkSubscription();
+    // Get user's subscription
+    const userSubscription = await prismadb.userSubscription.findUnique({
+      where: {
+        userId: user.id
+      }
+    });
 
-    if (!isPro ) {
-      return new NextResponse("Pro subscription required", { status: 403 });
+    if (!userSubscription) {
+      return new NextResponse("Subscription required", { status: 403 });
     }
+
+    // Get existing bot count for the user
+    const existingBotsCount = await prismadb.companion.count({
+      where: {
+        userId: user.id
+      }
+    });
+
+    // Check limits based on subscription price
+    if (userSubscription.price === 999) {
+      if (existingBotsCount >= 1) {
+        return new NextResponse("Starter plan allows only 1 bot creation, upgrade to pro to create more", { status: 403 });
+      }
+    } else if (userSubscription.price === 2999) {
+      if (existingBotsCount >= 10) {
+        return new NextResponse("Pro plan allows up to 10 bot creations, upgrade to ultimate to create more", { status: 403 });
+      }
+    }
+    // Ultimate plan (4999) has no limit, so no check needed
 
     const companion = await prismadb.companion.create({
       data: {

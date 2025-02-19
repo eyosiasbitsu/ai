@@ -61,3 +61,29 @@ export const getSubscriptionData = async () => {
 
   return userSubscription;
 };
+
+export const SUBSCRIPTION_TIERS = {
+  FREE: process.env.STARTER_PRICE_ID, // No price ID for free tier
+  PRO: process.env.PRO_PRICE_ID,
+  ENTERPRISE: process.env.ULTIMATE_PRICE_ID,
+} as const;
+
+export const changeSubscription = async (newPriceId: string) => {
+  try {
+    const response = await fetch('/api/stripe/change-subscription', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ newPriceId }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to change subscription');
+    }
+
+    return response.json();
+  } catch (error) {
+    throw error;
+  }
+};

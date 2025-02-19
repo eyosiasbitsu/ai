@@ -27,40 +27,41 @@ export async function GET() {
       return new NextResponse("No subscription found", { status: 404 });
     }
 
-    // Create a Stripe billing portal configuration first
+    if (!userSubscription.stripePriceId) {
+      return new NextResponse("No price ID found", { status: 400 });
+    }
+
+    // First create a configuration for the portal
     const configuration = await stripe.billingPortal.configurations.create({
-      business_profile: {
-        headline: "Companion AI Subscription Options",
-      },
       features: {
         subscription_update: {
           enabled: true,
           default_allowed_updates: ["price"],
+          proration_behavior: "always_invoice",
           products: [
             {
-              product: process.env.STRIPE_PRODUCT_ID!,
-              prices: [
-                process.env.STRIPE_STARTER_PRICE_ID!, // $9.99
-                process.env.STRIPE_PRO_PRICE_ID!,     // $29.99
-                process.env.STRIPE_ULTIMATE_PRICE_ID! // $49.99
-              ]
+              product: "prod_RnhVPbX3Lh3Zhk",
+              prices: [userSubscription.stripePriceId]
             }
           ]
+        },
+        customer_update: {
+          enabled: true,
+          allowed_updates: ["email", "tax_id"]
         },
         payment_method_update: {
           enabled: true
         },
-        customer_update: {
-          enabled: true,
-          allowed_updates: ["email", "address"]
-        },
-        invoice_history: {
+        subscription_cancel: {
           enabled: true
         }
+      },
+      business_profile: {
+        headline: "Manage your subscription"
       }
     });
 
-    // Create the billing portal session with the configuration
+    // Then create the session with this configuration
     const session = await stripe.billingPortal.sessions.create({
       customer: userSubscription.stripeCustomerId,
       configuration: configuration.id,

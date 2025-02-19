@@ -17,8 +17,14 @@ export async function POST(req: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    if (!unitAmount || isNaN(unitAmount)) {
-      return new NextResponse("Invalid unit amount", { status: 400 });
+    const priceIds: Record<number, string> = {
+      999: process.env.STARTER_PRICE_ID!,
+      2999: process.env.PRO_PRICE_ID!,
+      4999: process.env.ULTIMATE_PRICE_ID!
+    };
+
+    if (!unitAmount || !priceIds[unitAmount as keyof typeof priceIds]) {
+      return new NextResponse("Invalid unit amount. Must be one of: 999, 2999, 4999", { status: 400 });
     }
 
     const userSubscription = await prismadb.userSubscription.findUnique({
@@ -45,17 +51,7 @@ export async function POST(req: Request) {
       customer_email: user.emailAddresses[0].emailAddress,
       line_items: [
         {
-          price_data: {
-            currency: "USD",
-            product_data: {
-              name: "Companion Pro",
-              description: "Create Custom AI Companions"
-            },
-            unit_amount: unitAmount,
-            recurring: {
-              interval: "month"
-            }
-          },
+          price: priceIds[unitAmount],
           quantity: 1,
         },
       ],

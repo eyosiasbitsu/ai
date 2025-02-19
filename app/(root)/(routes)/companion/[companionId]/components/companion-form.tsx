@@ -111,11 +111,19 @@ export const CompanionForm = ({
       router.refresh();
       router.push("/");
     } catch (error) {
-      toast({
-        variant: "destructive",
-        description: "Something went wrong.",
-        duration: 3000,
-      });
+      if (axios.isAxiosError(error) && error.response?.data) {
+        toast({
+          variant: "destructive",
+          description: error.response.data,
+          duration: 3000,
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          description: "Something went wrong.",
+          duration: 3000,
+        });
+      }
     }
   };
 
