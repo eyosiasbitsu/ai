@@ -19,7 +19,7 @@ import { useToast } from "@/components/ui/use-toast";
 const AI_PERSONA_COST = 100;
 const VOTE_COST = 25;
 const XP_PER_LEVEL = 160; // Same as chat-limit.tsx
-const XP_Submit_Features = 25;
+const XP_Submit_Features = 50;
 
 // Calculate level based on total XP spent
 const calculateLevel = (totalSpent: number): number => {
