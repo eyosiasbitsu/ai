@@ -43,23 +43,23 @@ export const Navbar = ({
     }
   }, [stripePriceId]);
 
-  const onChangeSubscription = async () => {
-    try {
-      setLoading(true);
-      const newPriceId = isPro 
-        ? SUBSCRIPTION_TIERS.FREE 
-        : SUBSCRIPTION_TIERS.PRO;
+  // const onChangeSubscription = async () => {
+  //   try {
+  //     setLoading(true);
+  //     const newPriceId = isPro 
+  //       ? SUBSCRIPTION_TIERS.FREE 
+  //       : SUBSCRIPTION_TIERS.PRO;
       
-      if (newPriceId) {
-        await changeSubscription(newPriceId);
-        window.location.reload();
-      }
-    } catch (error) {
-      console.error("Subscription change error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  //     if (newPriceId) {
+  //       await changeSubscription(newPriceId);
+  //       window.location.reload();
+  //     }
+  //   } catch (error) {
+  //     console.error("Subscription change error:", error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   return ( 
     <div className="fixed w-full z-50 flex justify-between items-center py-2 px-4 h-16 border-b border-primary/10 bg-secondary">
@@ -73,12 +73,12 @@ export const Navbar = ({
       </div>
       <div className="flex items-center gap-x-3">
         <ChatLimit userId={userId} />
-        {!isPro ? (
+        {/* {!isPro ? ( */}
           <Button onClick={proModal.onOpen} size="sm" variant="premium">
-            Upgrade
+            Buy XP
             <Sparkles className="h-4 w-4 fill-white text-white ml-2" />
           </Button>
-        ) : (
+        {/* ) : (
           <>
             <Button 
               onClick={() => setShowChangePlan(true)} 
@@ -94,7 +94,7 @@ export const Navbar = ({
               currentPlan={currentPlan}
             />
           </>
-        )}
+        )} */}
         <ModeToggle />
         <UserButton afterSignOutUrl="/" />
       </div>

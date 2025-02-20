@@ -41,11 +41,7 @@ const RootPage = async ({
               { userId: userId }
             ]}
           ]
-        },
-        // Add filter for free companions if user is not PRO
-        ...(!isPro ? [{
-          isFree: true
-        }] : [])
+        },  
       ]
     },
     orderBy: {

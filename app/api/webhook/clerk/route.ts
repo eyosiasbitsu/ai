@@ -52,6 +52,15 @@ export async function POST(req: Request) {
 
   if (eventType === 'user.created' || eventType === 'user.updated') {
     const { id, email_addresses } = evt.data;
+    
+    // Get primary email address
+    const primaryEmail = email_addresses[0]?.email_address;
+
+    if (!primaryEmail) {
+      return new Response('No email address found', {
+        status: 400
+      });
+    }
 
     // Check if user already has usage record
     const existingUsage = await prisma.userUsage.findUnique({
@@ -64,8 +73,8 @@ export async function POST(req: Request) {
         await prisma.userUsage.create({
           data: {
             userId: id,
+            email: primaryEmail, // Save the email
             totalSpent: 0,
-            level: 0,
             availableTokens: 100, // Starting tokens
           }
         });

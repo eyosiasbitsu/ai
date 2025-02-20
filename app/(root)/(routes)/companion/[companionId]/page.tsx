@@ -21,12 +21,6 @@ const CompanionIdPage = async ({
     return redirectToSignIn();
   }
 
-  const validSubscription = await checkSubscription();
-
-  if (!validSubscription) {
-    return redirect("/");
-  }
-
   const companion = await prismadb.companion.findUnique({
     where: {
       id: params.companionId,
