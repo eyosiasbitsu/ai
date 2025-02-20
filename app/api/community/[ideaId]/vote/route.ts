@@ -44,7 +44,10 @@ export async function PATCH(
       }),
       prismadb.userUsage.update({
         where: { userId: user.id },
-        data: { availableTokens: userUsage.availableTokens - VOTE_COST }
+        data: { 
+          availableTokens: userUsage.availableTokens - VOTE_COST,
+          totalSpent: userUsage.totalSpent + VOTE_COST
+        }
       })
     ]);
 

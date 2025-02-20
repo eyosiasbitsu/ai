@@ -81,7 +81,7 @@ export async function POST(
       where: { userId: user.id },
       data: {
         availableTokens: { decrement: XP_PER_MESSAGE },
-        totalSpent: { increment: XP_PER_MESSAGE  }, // Convert XP to dollars (20 XP = $1)
+        totalSpent: { increment: XP_PER_MESSAGE  }, 
       }
     });
 

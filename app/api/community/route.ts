@@ -34,7 +34,10 @@ export async function POST(req: Request) {
       }),
       prismadb.userUsage.update({
         where: { userId: user.id },
-        data: { availableTokens: userUsage.availableTokens - IDEA_SUBMISSION_COST }
+        data: { 
+          availableTokens: userUsage.availableTokens - IDEA_SUBMISSION_COST,
+          totalSpent: userUsage.totalSpent + IDEA_SUBMISSION_COST
+        }
       })
     ]);
 

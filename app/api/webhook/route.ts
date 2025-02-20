@@ -5,6 +5,13 @@ import { NextResponse } from "next/server"
 import prismadb from "@/lib/prismadb"
 import { stripe } from "@/lib/stripe"
 
+const XP_PER_LEVEL = 160;
+
+// Calculate how many levels will be gained from XP amount
+const calculateLevelIncrease = (xpAmount: number): number => {
+  return Math.floor(xpAmount / XP_PER_LEVEL);
+};
+
 export async function POST(req: Request) {
   const body = await req.text()
   const signature = headers().get("Stripe-Signature") as string
@@ -22,89 +29,58 @@ export async function POST(req: Request) {
     return new NextResponse(`Webhook Error: ${error.message}`, { status: 400 })
   }
 
-  const session = event.data.object as Stripe.Checkout.Session | Stripe.Invoice
+  const session = event.data.object as Stripe.Checkout.Session
 
-  try {
-    if (event.type === "checkout.session.completed") {
-      if (!session || typeof session.subscription !== 'string') {
-        return new NextResponse("Invalid session or subscription", { status: 400 });
-      }
+  // Handle successful one-time payments
+  if (event.type === "checkout.session.completed") {
+    const userId = session.metadata?.userId;
+    const xpAmount = parseInt(session.metadata?.xpAmount || "0");
+    const amountPaid = session.amount_total ? session.amount_total / 100 : 0; // Convert cents to dollars
 
-      const subscription = await stripe.subscriptions.retrieve(
-        session.subscription
-      )
-
-      if (!session?.metadata?.userId) {
-        return new NextResponse("User id is required", { status: 400 });
-      }
-
-      await prismadb.userSubscription.create({
-        data: {
-          userId: session.metadata.userId,
-          stripeSubscriptionId: subscription.id,
-          stripeCustomerId: subscription.customer as string,
-          stripePriceId: subscription.items.data[0].price.id,
-          stripeCurrentPeriodEnd: new Date(
-            subscription.current_period_end * 1000
-          ),
-          price: subscription.items.data[0].price.unit_amount!,
-        },
-      })
+    if (!userId || !xpAmount) {
+      return new NextResponse("Missing metadata", { status: 400 });
     }
 
-    if (event.type === "invoice.payment_succeeded") {
-      if (!session || typeof session.subscription !== 'string') {
-        return new NextResponse("Invalid session or subscription", { status: 400 });
-      }
+    // Get current user usage
+    const userUsage = await prismadb.userUsage.findUnique({
+      where: { userId }
+    });
 
-      const subscription = await stripe.subscriptions.retrieve(
-        session.subscription
-      )
-
-      await prismadb.userSubscription.update({
-        where: {
-          stripeSubscriptionId: subscription.id,
-        },
-        data: {
-          stripePriceId: subscription.items.data[0].price.id,
-          stripeCurrentPeriodEnd: new Date(
-            subscription.current_period_end * 1000
-          ),
-          price: subscription.items.data[0].price.unit_amount!,
-        },
-      })
+    if (!userUsage) {
+      return new NextResponse("User usage not found", { status: 404 });
     }
 
-    if (event.type === "customer.subscription.updated") {
-      const subscription = event.data.object as Stripe.Subscription;
-      
-      await prismadb.userSubscription.update({
-        where: {
-          stripeSubscriptionId: subscription.id,
-        },
+    // Update user's XP balance and record transaction
+    await prismadb.$transaction([
+      // Update user usage
+      prismadb.userUsage.update({
+        where: { userId },
         data: {
-          stripePriceId: subscription.items.data[0].price.id,
-          stripeCurrentPeriodEnd: new Date(
-            subscription.current_period_end * 1000
-          ),
-          price: subscription.items.data[0].price.unit_amount!,
-        },
-      });
-    }
-
-    if (event.type === "customer.subscription.deleted") {
-      const subscription = event.data.object as Stripe.Subscription;
-      
-      await prismadb.userSubscription.delete({
-        where: {
-          stripeSubscriptionId: subscription.id,
+          availableTokens: { increment: xpAmount },
+          totalSpent: { increment: xpAmount }, // Increment total XP spent for level calculation
         }
-      });
-    }
-
-    return new NextResponse(null, { status: 200 })
-  } catch (error) {
-    console.log("[WEBHOOK_ERROR]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+      }),
+      // Record the transaction
+      prismadb.usageTransaction.create({
+        data: {
+          userId,
+          amount: xpAmount,
+        }
+      }),
+      // Update user subscription record with payment info
+      prismadb.userSubscription.upsert({
+        where: { userId },
+        create: {
+          userId,
+          price: amountPaid,
+          stripeCustomerId: session.customer as string,
+        },
+        update: {
+          price: { increment: amountPaid },
+        }
+      })
+    ]);
   }
-};
+
+  return new NextResponse(null, { status: 200 })
+}
