@@ -39,14 +39,6 @@ export async function POST(
         statusText: `Need ${XP_PER_MESSAGE - userUsage.availableTokens} more XP`
       });
     }
-
-    const identifier = request.url + "-" + user.id;
-    const { success } = await rateLimit(user.id);
-
-    if (!success) {
-      return new NextResponse("Rate limit exceeded", { status: 429 });
-    }
-
     const companion = await prismadb.companion.findUnique({
       where: {
         id: params.chatId,
@@ -76,22 +68,29 @@ export async function POST(
       stream: false,
     });
 
-    // Update user's XP after successful response
-    await prismadb.userUsage.update({
-      where: { userId: user.id },
-      data: {
-        availableTokens: { decrement: XP_PER_MESSAGE },
-        totalSpent: { increment: XP_PER_MESSAGE  }, 
-      }
-    });
-
-    // Record the transaction
-    await prismadb.usageTransaction.create({
-      data: {
-        userId: user.id,
-        amount: XP_PER_MESSAGE
-      }
-    });
+    // Update companion XP and user usage in a transaction
+    await prismadb.$transaction([
+      // Update companion XP
+      prismadb.companion.update({
+        where: { id: params.chatId },
+        data: { xpEarned: { increment: XP_PER_MESSAGE } }
+      }),
+      // Update user usage
+      prismadb.userUsage.update({
+        where: { userId: user.id },
+        data: {
+          availableTokens: { decrement: XP_PER_MESSAGE },
+          totalSpent: { increment: XP_PER_MESSAGE  }, 
+        }
+      }),
+      // Record transaction
+      // prismadb.usageTransaction.create({
+      //   data: {
+      //     userId: user.id,
+      //     amount: XP_PER_MESSAGE
+      //   }
+      // })
+    ]);
 
     return new NextResponse(response.choices[0].message.content);
   } catch (error) {

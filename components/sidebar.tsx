@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Plus, Users } from "lucide-react";
+import { Home, Plus, Users, Settings } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -24,13 +24,26 @@ export const Sidebar = ({
   const router = useRouter();
   const pathname = usePathname();
   const [userUsage, setUserUsage] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
+    // Check both authentication and admin status
+    const isAuthenticated = localStorage.getItem("isAdminAuthenticated") === "true";
+    const adminStatus = localStorage.getItem("isAdmin") === "true";
+    setIsAdmin(isAuthenticated && adminStatus);
+
+    const handleStorageChange = () => {
+      const isAuth = localStorage.getItem("isAdminAuthenticated") === "true";
+      const isAdm = localStorage.getItem("isAdmin") === "true";
+      setIsAdmin(isAuth && isAdm);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
     const fetchUserUsage = async () => {
       try {
         const response = await fetch("/api/user-progress");
         const data = await response.json();
-        console.log(data);
         setUserUsage(data);
       } catch (error) {
         console.error("Error fetching user usage:", error);
@@ -38,19 +51,25 @@ export const Sidebar = ({
     };
 
     fetchUserUsage();
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
-  const onNavigate = async (url: string, requiredXP: number = 0) => {
-    // Only check availableTokens for navigation
-    console.log(userUsage);
-    if (requiredXP === 0 || (userUsage && userUsage.availableTokens >= requiredXP)) {
-      await router.push(url);
-      return;
-    }else{
+  // Check both conditions on route change
+  useEffect(() => {
+    const isAuthenticated = localStorage.getItem("isAdminAuthenticated") === "true";
+    const adminStatus = localStorage.getItem("isAdmin") === "true";
+    setIsAdmin(isAuthenticated && adminStatus);
+  }, [pathname]);
 
-      proModal.onOpen();
+  const onNavigate = (url: string, requiredXP: number = 0) => {
+    if (requiredXP === 0 || (userUsage && userUsage.availableTokens >= requiredXP)) {
+      router.push(url);
+      return;
     }
-    
+    proModal.onOpen();
   }
 
   const routes = [
@@ -71,8 +90,21 @@ export const Sidebar = ({
       href: '/community',
       label: "Community",
       requiredXP: 0,
-    },
+    }
   ];
+
+  // Add admin route if user is admin
+  if (isAdmin) {
+    routes.push({
+      icon: Settings,
+      href: '/admin/dashboard',
+      label: "Admin",
+      requiredXP: 0,
+    });
+  }
+
+  console.log("Routes:", routes); // Debug log
+  console.log("Is Admin:", isAdmin); // Debug log
 
   return (
     <div className="space-y-4 flex flex-col h-full text-primary bg-secondary">

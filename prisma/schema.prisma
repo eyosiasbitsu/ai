@@ -16,6 +16,7 @@ model Category {
 model Companion {
   id            String @id @default(uuid())
   userId        String
+  xpEarned      Int    @default(0)
   userName      String
   src           String
   name          String @db.Text

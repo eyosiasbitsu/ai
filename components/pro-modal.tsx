@@ -17,8 +17,9 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 
 const AI_PERSONA_COST = 100;
-const VOTE_COST = 120;
+const VOTE_COST = 25;
 const XP_PER_LEVEL = 160; // Same as chat-limit.tsx
+const XP_Submit_Features = 25;
 
 // Calculate level based on total XP spent
 const calculateLevel = (totalSpent: number): number => {
@@ -57,14 +58,16 @@ export const ProModal = () => {
       features: [
         "+100 XP (≈ 50 messages)",
         `Increase ${Math.floor(100 / XP_PER_LEVEL)} Level`,
-        `Create 1 AI Persona (${AI_PERSONA_COST} XP)`,
-        `Send 0 Votes (${VOTE_COST} XP)`
+        `Create ${Math.floor(100 / AI_PERSONA_COST)} AI Persona (${AI_PERSONA_COST} XP)`,
+        `Send ${Math.floor(100 / VOTE_COST)} Votes (${VOTE_COST} XP)`,
+        `Submit ${Math.floor(100 / XP_Submit_Features)} Features (${XP_Submit_Features} XP)`
       ],
       icon: Zap,
       color: "blue",
       levelUp: Math.floor(100 / XP_PER_LEVEL),
       botLimit: Math.floor(100 / AI_PERSONA_COST),
-      votesLimit: Math.floor(100 / VOTE_COST)
+      votesLimit: Math.floor(100 / VOTE_COST),
+      submitLimit: Math.floor(100 / XP_Submit_Features)
     },
     xp500: {
       name: "Power Pack",
@@ -73,14 +76,16 @@ export const ProModal = () => {
       features: [
         "+500 XP (≈ 250 messages)",
         `Increase ${Math.floor(500 / XP_PER_LEVEL)} Levels`,
-        `Create 5 AI Personas (${AI_PERSONA_COST} XP)`,
-        `Send 4 Votes (${VOTE_COST} XP)`
+        `Create ${Math.floor(500 / AI_PERSONA_COST)} AI Personas (${AI_PERSONA_COST} XP)`,
+        `Send ${Math.floor(500 / VOTE_COST)} Votes (${VOTE_COST} XP)`,
+        `Submit ${Math.floor(500 / XP_Submit_Features)} Features (${XP_Submit_Features} XP)`
       ],
       icon: Rocket,
       color: "purple",
       levelUp: Math.floor(500 / XP_PER_LEVEL),
       botLimit: Math.floor(500 / AI_PERSONA_COST),
-      votesLimit: Math.floor(500 / VOTE_COST)
+      votesLimit: Math.floor(500 / VOTE_COST),
+      submitLimit: Math.floor(500 / XP_Submit_Features)
     },
     xp2000: {
       name: "Ultimate Pack",
@@ -89,14 +94,16 @@ export const ProModal = () => {
       features: [
         "+2000 XP (≈ 1000 messages)",
         `Increase ${Math.floor(2000 / XP_PER_LEVEL)} Levels`,
-        `Create 20 AI Personas (${AI_PERSONA_COST} XP)`,
-        `Send 16 Votes (${VOTE_COST} XP)`
+        `Create ${Math.floor(2000 / AI_PERSONA_COST)} AI Personas (${AI_PERSONA_COST} XP)`,
+        `Send ${Math.floor(2000 / VOTE_COST)} Votes (${VOTE_COST} XP)`,
+        `Submit ${Math.floor(2000 / XP_Submit_Features)} Features (${XP_Submit_Features} XP)`
       ],
       icon: Star,
       color: "amber",
       levelUp: Math.floor(2000 / XP_PER_LEVEL),
       botLimit: Math.floor(2000 / AI_PERSONA_COST),
-      votesLimit: Math.floor(2000 / VOTE_COST)
+      votesLimit: Math.floor(2000 / VOTE_COST),
+      submitLimit: Math.floor(2000 / XP_Submit_Features)
     }
   };
 
@@ -177,27 +184,33 @@ export const ProModal = () => {
                   </div>
 
                   {/* Benefits Grid */}
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <div className="flex items-center gap-x-2">
-                      <Zap className={`h-5 w-5 text-${option.color}-500`} />
-                      <span className="text-lg font-semibold">{option.xp} XP</span>
+                      <Zap className={`h-4 w-4 text-${option.color}-500`} />
+                      <span className="text-base font-semibold">{option.xp} XP</span>
                     </div>
                     
                     <div className="flex items-center gap-x-2">
-                      <Trophy className={`h-5 w-5 text-${option.color}-500`} />
-                      <span>Increase {option.levelUp} {option.levelUp === 1 ? 'Level' : 'Levels'}</span>
+                      <Trophy className={`h-4 w-4 text-${option.color}-500`} />
+                      <span className="text-sm">Increase {option.levelUp} {option.levelUp === 1 ? 'Level' : 'Levels'}</span>
                     </div>
 
                     <div className="flex items-center gap-x-2">
-                      <Bot className={`h-5 w-5 text-${option.color}-500`} />
-                      <span>Create {option.botLimit} AI Personas</span>
+                      <Bot className={`h-4 w-4 text-${option.color}-500`} />
+                      <span className="text-sm">Create {option.botLimit} AI Personas</span>
                       <span className="text-xs text-muted-foreground">({AI_PERSONA_COST} XP)</span>
                     </div>
 
                     <div className="flex items-center gap-x-2">
-                      <ThumbsUp className={`h-5 w-5 text-${option.color}-500`} />
-                      <span>Send {option.votesLimit} Votes</span>
+                      <ThumbsUp className={`h-4 w-4 text-${option.color}-500`} />
+                      <span className="text-sm">Send {option.votesLimit} Votes</span>
                       <span className="text-xs text-muted-foreground">({VOTE_COST} XP)</span>
+                    </div>
+
+                    <div className="flex items-center gap-x-2">
+                      <Sparkles className={`h-4 w-4 text-${option.color}-500`} />
+                      <span className="text-sm">Submit {option.submitLimit} Features</span>
+                      <span className="text-xs text-muted-foreground">({XP_Submit_Features} XP)</span>
                     </div>
                   </div>
                 </div>
