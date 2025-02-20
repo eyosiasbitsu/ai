@@ -14,7 +14,6 @@ export async function GET() {
       where: { userId },
       select: {
         totalSpent: true,
-        level: true,
         availableTokens: true,
       }
     });

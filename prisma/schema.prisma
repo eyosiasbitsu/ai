@@ -111,3 +111,4 @@ model CommunityIdea {
   @@index([userId])
   @@index([createdAt])
 }
+
