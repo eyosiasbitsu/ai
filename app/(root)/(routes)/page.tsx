@@ -16,7 +16,6 @@ const RootPage = async ({
   searchParams
 }: RootPageProps) => {
   const { userId } = auth();
-  const isPro = await checkSubscription();
 
 
   if (!userId) {

@@ -79,3 +79,23 @@ export async function DELETE(
     return new NextResponse("Internal Error", { status: 500 });
   }
 };
+
+export async function GET(
+  req: Request,
+  { params }: { params: { companionId: string } }
+) {
+  try {
+    const companion = await prismadb.companion.findFirst({
+      where: {
+        id: params.companionId,
+      }
+    });
+
+    const categories = await prismadb.category.findMany();
+
+    return NextResponse.json({ companion, categories });
+  } catch (error) {
+    console.log("[COMPANION_GET]", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}

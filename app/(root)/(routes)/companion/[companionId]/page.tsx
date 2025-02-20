@@ -1,9 +1,10 @@
-import { redirect } from "next/navigation";
-import { auth, redirectToSignIn } from "@clerk/nextjs";
+"use client";
+
+import { useEffect, useState } from "react";
+import { redirect, useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 
 import prismadb from "@/lib/prismadb";
-import { checkSubscription } from "@/lib/subscription";
-
 import { CompanionForm } from "./components/companion-form";
 
 interface CompanionIdPageProps {
@@ -12,23 +13,38 @@ interface CompanionIdPageProps {
   };
 };
 
-const CompanionIdPage = async ({
+const CompanionIdPage = ({
   params
 }: CompanionIdPageProps) => {
-  const { userId } = auth();
+  const { userId } = useAuth();
+  const router = useRouter();
+  const [companion, setCompanion] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const isAdmin = localStorage.getItem("isAdmin") === "true";
 
-  if (!userId) {
-    return redirectToSignIn();
-  }
-
-  const companion = await prismadb.companion.findUnique({
-    where: {
-      id: params.companionId,
-      userId,
+  useEffect(() => {
+    if (!userId && !isAdmin) {
+      router.push("/sign-in");
+      return;
     }
-  });
 
-  const categories = await prismadb.category.findMany();
+    const fetchData = async () => {
+      const response = await fetch(`/api/companion/${params.companionId}`);
+      const data = await response.json();
+      setCompanion(data.companion);
+      setCategories(data.categories);
+    };
+
+    fetchData();
+  }, [userId, isAdmin, params.companionId, router]);
+
+  if (!companion) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">

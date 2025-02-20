@@ -80,6 +80,7 @@ model UserUsage {
   id              String    @id @default(cuid())
   userId          String    @unique
   email           String    @unique
+  totalMoneySpent Float     @default(0)      // Total money spent
   totalSpent      Float     @default(0)      // Total money spent
   availableTokens Int       @default(100)    // Free tokens to start
   createdAt       DateTime  @default(now())

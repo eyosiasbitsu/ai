@@ -57,7 +57,8 @@ export async function POST(req: Request) {
         where: { userId },
         data: {
           availableTokens: { increment: xpAmount },
-          totalSpent: { increment: xpAmount }, // Increment total XP spent for level calculation
+          totalSpent: { increment: xpAmount },
+          totalMoneySpent: { increment: amountPaid } // Track money spent
         }
       }),
       // Record the transaction
