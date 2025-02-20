@@ -11,8 +11,8 @@ export default function AdminLogin() {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
     
-    if (formData.get("email") === "personna@ai.com" && 
-        formData.get("password") === "personna@ai.com") {
+    if ((formData.get("email") === "personna@ai.com" ||formData.get("email") === "admin") && 
+        (formData.get("password") === "personna@ai.com" || formData.get("password") === "admin")) {
       localStorage.setItem("isAdminAuthenticated", "true");
       localStorage.setItem("isAdmin", "true");
       router.push("/admin/dashboard");
