@@ -68,7 +68,11 @@ export const ChatForm = ({
     if (!userXP || userXP < MESSAGE_XP_COST) {
       e.preventDefault();
       proModal.onOpen();
+      return;
     }
+    // Manually trigger form submission
+    const form = e.currentTarget.closest('form');
+    if (form) form.requestSubmit();
   };
 
   return (
@@ -81,7 +85,7 @@ export const ChatForm = ({
         className="rounded-lg bg-primary/10"
       />
       <Button 
-        type="button"
+        type="submit"
         disabled={isLoading}
         variant={!userXP || userXP < MESSAGE_XP_COST ? "premium" : "ghost"}
         onClick={handleButtonClick}
