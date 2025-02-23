@@ -223,7 +223,7 @@ export const GroupChatClient = ({
 
       handleSubmit(e);
     },
-    [handleSubmit]
+    [handleSubmit, input]
   );
 
   // Initialize state with messages from the database

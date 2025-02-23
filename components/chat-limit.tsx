@@ -51,7 +51,7 @@ export const ChatLimit = ({ userId, onXpChange }: ChatLimitProps) => {
     fetchProgress();
     const interval = setInterval(fetchProgress, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchProgress]);
 
   if (!progress) return null;
 
