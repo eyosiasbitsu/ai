@@ -11,9 +11,10 @@ import { useToast } from "@/components/ui/use-toast";
 
 interface ChatFormProps {
   input: string;
-  handleInputChange: (e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLTextAreaElement>) => void;
-  onSubmit: (e: FormEvent<HTMLFormElement>, chatRequestOptions?: ChatRequestOptions | undefined) => void;
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>) => void;
+  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   isLoading: boolean;
+  placeholder?: string;
 }
 
 const MESSAGE_XP_COST = 2;
@@ -24,6 +25,7 @@ export const ChatForm = ({
   handleInputChange,
   onSubmit,
   isLoading,
+  placeholder = "Type a message",
 }: ChatFormProps) => {
   const proModal = useProModal();
   const { toast } = useToast();
@@ -81,7 +83,7 @@ export const ChatForm = ({
         disabled={isLoading}
         value={input}
         onChange={handleInputChange}
-        placeholder={!userXP || userXP < MESSAGE_XP_COST ? "Need 2 XP to send a message" : "Type a message"}
+        placeholder={placeholder}
         className="rounded-lg bg-primary/10"
       />
       <Button 

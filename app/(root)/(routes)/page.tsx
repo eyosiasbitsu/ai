@@ -1,57 +1,69 @@
-import prismadb from "@/lib/prismadb"
-import { Categories } from "@/components/categories"
-import { Companions } from "@/components/companions"
-import { SearchInput } from "@/components/search-input"
+import prismadb from "@/lib/prismadb";
+import { Categories } from "@/components/categories";
+import { Companions } from "@/components/companions";
+import { SearchInput } from "@/components/search-input";
 import { auth, redirectToSignIn } from "@clerk/nextjs";
 import { checkSubscription } from "@/lib/subscription";
+import { GroupCards } from "@/components/group-cards";
 
 interface RootPageProps {
   searchParams: {
     categoryId: string;
     name: string;
   };
-};
+}
 
-const RootPage = async ({
-  searchParams
-}: RootPageProps) => {
+const RootPage = async ({ searchParams }: RootPageProps) => {
   const { userId } = auth();
-
 
   if (!userId) {
     return redirectToSignIn();
   }
+
+  const groups = await prismadb.groupChat.findMany({
+    where: {
+      creatorId: userId,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
 
   const data = await prismadb.companion.findMany({
     where: {
       AND: [
         {
           categoryId: searchParams.categoryId || undefined,
-          name: searchParams.name ? {
-            contains: searchParams.name,
-            mode: 'insensitive',
-          } : undefined,
+          name: searchParams.name
+            ? {
+                contains: searchParams.name,
+                mode: "insensitive",
+              }
+            : undefined,
         },
         {
           OR: [
-            { private: false },  // Show all public companions
-            { AND: [            // Show private companions only if they belong to the user
-              { private: true },
-              { userId: userId }
-            ]}
-          ]
-        },  
-      ]
+            { private: false }, // Show all public companions
+            {
+              AND: [
+                // Show private companions only if they belong to the user
+                { private: true },
+                { userId: userId },
+              ],
+            },
+          ],
+        },
+      ],
     },
     orderBy: {
-      createdAt: "desc"
+      createdAt: "desc",
     },
     include: {
       _count: {
         select: {
           messages: true,
-        }
-      }
+        },
+      },
     },
   });
 
@@ -63,7 +75,7 @@ const RootPage = async ({
       <Categories data={categories} />
       <Companions userId={userId} data={data} />
     </div>
-  )
-}
+  );
+};
 
-export default RootPage
+export default RootPage;

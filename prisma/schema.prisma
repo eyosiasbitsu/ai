@@ -25,6 +25,8 @@ model Companion {
   seed          String @db.Text
   private       Boolean @default(false)
   isFree        Boolean @default(false)
+  messageDelay  Int     @default(0)  // Added: Delay in milliseconds between messages
+  sendMultipleMessages Boolean @default(true)
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -33,6 +35,7 @@ model Companion {
   categoryId    String
 
   messages      Message[]
+  groupChats    GroupChatMember[]  // Added: Relation to group messages
 
   @@index([categoryId])
 }
@@ -112,5 +115,48 @@ model CommunityIdea {
 
   @@index([userId])
   @@index([createdAt])
+}
+
+// Added: New model for group chats
+model GroupChat {
+  id          String   @id @default(uuid())
+  name        String   @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  creatorId   String   // User who created the group
+  
+  members     GroupChatMember[]
+  messages    GroupMessage[]
+}
+
+// Added: Model for group chat members (companions)
+model GroupChatMember {
+  id          String   @id @default(uuid())
+  groupChat   GroupChat @relation(fields: [groupChatId], references: [id], onDelete: Cascade)
+  groupChatId String
+  companion   Companion @relation(fields: [companionId], references: [id], onDelete: Cascade)
+  companionId String
+  joinedAt    DateTime @default(now())
+
+  @@unique([groupChatId, companionId])
+  @@index([groupChatId])
+  @@index([companionId])
+}
+
+// Added: Model for group chat messages
+model GroupMessage {
+  id          String   @id @default(uuid())
+  content     String   @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  groupChat   GroupChat @relation(fields: [groupChatId], references: [id], onDelete: Cascade)
+  groupChatId String
+  
+  isBot       Boolean  
+  senderId    String    // ID of either the user or companion who sent the message
+
+  @@index([groupChatId])
+  @@index([senderId])
 }
 

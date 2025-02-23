@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { UserUsage } from "@prisma/client";
 import { Companion } from "@prisma/client";
+import { Input } from "@/components/ui/input";
 
 export default function AdminDashboard() {
   const [originalBots, setOriginalBots] = useState<Companion[]>([]);
@@ -21,6 +22,11 @@ export default function AdminDashboard() {
   const [userSortType, setUserSortType] = useState<
     "none" | "highSpend" | "lowSpend"
   >("none");
+  const [delayUpdateId, setDelayUpdateId] = useState<string | null>(null);
+  const [newDelay, setNewDelay] = useState<number>(0);
+  const [chatRateId, setChatRateId] = useState<string | null>(null);
+  const [isApplying, setIsApplying] = useState(false);
+  const [sendMultipleMessages, setSendMultipleMessages] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -98,15 +104,100 @@ export default function AdminDashboard() {
     setUserSortType(type);
   };
 
+  const handleDelayUpdate = async () => {
+    if (!delayUpdateId) return;
+
+    try {
+      const response = await fetch(`/api/admin/bots/${delayUpdateId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ messageDelay: newDelay }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update delay');
+
+      setDelayUpdateId(null);
+      window.location.reload();
+    } catch (error) {
+      console.error('Error updating delay:', error);
+    }
+  };
+
+  const handleChatRateUpdate = async () => {
+    console.log("chatRateId", chatRateId);
+    if (!chatRateId) return;
+
+    setIsApplying(true);
+    try {
+      const response = await fetch(`/api/admin/bots/${chatRateId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ sendMultipleMessages }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update chat rate');
+
+      setChatRateId(null);
+      window.location.reload();
+    } catch (error) {
+      console.error('Error updating chat rate:', error);
+    } finally {
+      setIsApplying(false);
+    }
+  };
+
   return (
     <div className="p-8 bg-background min-h-[calc(100vh-80px)]">
       <Modal
         isOpen={!!deleteId}
         onClose={() => setDeleteId(null)}
-        onConfirm={handleDelete}
+        onConfirm={() => {}}
         title="Delete Bot"
         description="Are you sure you want to delete this bot? This action cannot be undone."
       />
+      <Modal
+        isOpen={!!delayUpdateId}
+        onClose={() => setDelayUpdateId(null)}
+        onConfirm={handleDelayUpdate}
+        title="Update Message Delay"
+        description="Set the delay (in seconds) before the bot responds to messages."
+        isLoading={isLoading}
+      >
+        <div className="mt-4">
+          <Input
+            type="number"
+            min="0"
+            value={newDelay}
+            onChange={(e) => setNewDelay(parseInt(e.target.value) || 0)}
+            placeholder="Delay in seconds"
+            disabled={isLoading}
+          />
+        </div>
+      </Modal>
+      <Modal  
+        isOpen={!!chatRateId}
+        onClose={() => setChatRateId(null)}
+        onConfirm={handleChatRateUpdate}
+        title="Adjust Chat Rate"
+        description="Toggle to adjust the chat rate."
+        isLoading={isApplying}
+      >
+        <div className="mt-4">
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              checked={sendMultipleMessages}
+              onChange={(e) => setSendMultipleMessages(e.target.checked)}
+              disabled={isApplying}
+            />
+            <span className="ml-2">Send Multiple Messages</span>
+          </label>
+        </div>
+      </Modal>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         <button
@@ -165,9 +256,9 @@ export default function AdminDashboard() {
                   cell: ({ row }) => {
                     const bot = row.original as unknown as Companion;
                     return (
-                      <Badge variant={bot.private ? "destructive" : "secondary"}>
-                        {bot.private ? "Yes" : "No"}
-                      </Badge>
+                      <span>
+                        {bot.private ? "✔️" : "❌"}
+                      </span>
                     );
                   },
                 },
@@ -191,6 +282,30 @@ export default function AdminDashboard() {
                     new Date(row.original.createdAt).toLocaleDateString(),
                 },
                 {
+                  accessorKey: "messageDelay",
+                  header: "Message Delay",
+                  cell: ({ row }) => {
+                    const bot = row.original as unknown as Companion;
+                    return (
+                      <Badge variant="secondary">
+                        {bot.messageDelay}s
+                      </Badge>
+                    );
+                  },
+                },
+                {
+                  accessorKey: "sendMultipleMessages",
+                  header: "Multiple Messages",
+                  cell: ({ row }) => {
+                    const bot = row.original as unknown as Companion;
+                    return (
+                      <span>
+                        {bot.sendMultipleMessages ? "✔️" : "❌"}
+                      </span>
+                    );
+                  },
+                },
+                {
                   accessorKey: "actions",
                   header: "Actions",
                   cell: ({ row }) => (
@@ -204,10 +319,28 @@ export default function AdminDashboard() {
                         Modify
                       </button>
                       <button
+                        onClick={() => {
+                          setNewDelay(row.original.messageDelay);
+                          setDelayUpdateId(row.original.id);
+                        }}
+                        className="bg-secondary text-secondary-foreground px-3 py-1 rounded-md text-sm hover:opacity-90 transition"
+                      >
+                        Set Delay
+                      </button>
+                      <button
                         onClick={() => setDeleteId(row.original.id)}
                         className="bg-destructive text-destructive-foreground px-3 py-1 rounded-md text-sm hover:opacity-90 transition"
                       >
                         Delete
+                      </button>
+                      <button
+                        onClick={() => {
+                          setChatRateId(row.original.id);
+                          setSendMultipleMessages(row.original.sendMultipleMessages);
+                        }}
+                        className="bg-secondary text-secondary-foreground px-3 py-1 rounded-md text-sm hover:opacity-90 transition"
+                      >
+                        Multiple Messages
                       </button>
                     </div>
                   ),

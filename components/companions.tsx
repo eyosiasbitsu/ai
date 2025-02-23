@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Companion } from "@prisma/client"
 import { MessagesSquare, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import React from "react";
+import React, { useState } from "react";
 
 import { Card, CardFooter, CardHeader } from "@/components/ui/card"
 
@@ -24,6 +24,7 @@ export const Companions = ({
 }: CompanionsProps) => {
   const [currentPage, setCurrentPage] = React.useState(1);
   const [isMobile, setIsMobile] = React.useState(false);
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
   
   React.useEffect(() => {
     setIsMobile(window.innerWidth < 640);
@@ -133,7 +134,6 @@ export const Companions = ({
           )}
         </div>
       )}
-      <div className="flex justify-center gap-2 mt-4"></div>
     </div>
   )
 }

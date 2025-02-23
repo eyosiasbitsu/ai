@@ -11,17 +11,20 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 
 export interface ChatMessageProps {
-  role: "system" | "user",
+  role: "system" | "user";
   content?: string;
   isLoading?: boolean;
   src?: string;
+  id?: string;
+  name?: string;
 }
 
 export const ChatMessage = ({
   role,
   content,
   isLoading,
-  src
+  src,
+  name
 }: ChatMessageProps) => {
   const { toast } = useToast();
   const { theme } = useTheme();
@@ -40,10 +43,14 @@ export const ChatMessage = ({
 
   return (
     <div className={cn(
-      "group flex items-start gap-x-3 py-4 w-full",
+      "group flex items-start gap-x-3 py-4 max-w-[80%] break-words",
       role === "user" && "justify-end"
     )}>
-      {role !== "user" && src && <BotAvatar src={src} />}
+      {role !== "user" && src && (
+        <div className="flex flex-col items-center gap-y-1">
+          <BotAvatar src={src} />
+        </div>
+      )}
       <div className="rounded-md px-4 py-2 max-w-sm text-sm bg-primary/10">
         {isLoading 
           ? <BeatLoader color={theme === "light" ? "black" : "white"} size={5} /> 

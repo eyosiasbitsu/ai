@@ -24,47 +24,168 @@ export const ChatClient = ({
   companion,
 }: ChatClientProps) => {
   const router = useRouter();
-  const [messages, setMessages] = useState<ChatMessageProps[]>(companion.messages);
+  const [messages, setMessages] = useState<ChatMessageProps[]>(
+    companion.messages.length === 0 
+      ? [{
+          role: "system",
+          content: "Hi there! 👋",
+          src: companion.src
+        }] 
+      : companion.messages
+  );
   const { decrementRemaining } = useChatLimit();
-  
-  const {
-    input,
-    isLoading,
-    handleInputChange,
-    handleSubmit,
-    setInput,
-  } = useCompletion({
-    api: `/api/chat/${companion.id}`,
-    onFinish(_prompt, completion) {
-      const systemMessage: ChatMessageProps = {
-        role: "system",
-        content: completion
-      };
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isClearingMessages, setIsClearingMessages] = useState(false);
 
-      setMessages((current) => [...current, systemMessage]);
-      setInput("");
-      decrementRemaining();
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
+    setInput(e.target.value);
+  };
 
-      router.refresh();
-    },
-  });
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!input.trim() || isLoading) return;
 
-  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     const userMessage: ChatMessageProps = {
       role: "user",
       content: input
     };
 
     setMessages((current) => [...current, userMessage]);
+    setIsLoading(true);
 
-    handleSubmit(e);
-  }
+    try {
+      const response = await fetch(`/api/chat/${companion.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: input }),
+      });
+      
+      const completion = await response.text();
+      console.log("🤖 First message received");
+      
+      const systemMessage: ChatMessageProps = {
+        role: "system",
+        content: completion,
+        src: companion.src
+      };
+
+      setMessages((current) => [...current, systemMessage]);
+      setInput("");
+      decrementRemaining();
+
+      if (companion.sendMultipleMessages) {
+        console.log("📱 Multiple messages enabled for this companion");
+        const doubleMessageRoll = Math.random() * 100;
+        console.log(`🎲 Double message roll: ${doubleMessageRoll.toFixed(2)}% (needs ≤ 15%)`);
+        
+        if (doubleMessageRoll <= 15) {
+          console.log("🎯 Triggering second message...");
+          setMessages((current) => [...current, { 
+            role: "system", 
+            content: "", 
+            isLoading: true,
+            src: companion.src
+          }]);
+          
+          try {
+            const followUpResponse = await fetch(`/api/chat/${companion.id}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                prompt: completion,
+                isFollowUp: true
+              }),
+            });
+            
+            const secondMessage = await followUpResponse.text();
+            console.log("🤖 Second message received");
+            
+            setMessages((current) => {
+              const messages = current.filter(message => !message.isLoading);
+              return [...messages, {
+                role: "system",
+                content: secondMessage,
+                src: companion.src
+              }];
+            });
+            decrementRemaining();
+
+            const tripleMessageRoll = Math.random() * 100;
+            console.log(`🎲 Triple message roll: ${tripleMessageRoll.toFixed(2)}% (needs ≤ 5%)`);
+            
+            if (tripleMessageRoll <= 5) {
+              console.log("🎯 Triggering third message...");
+              setMessages((current) => [...current, { 
+                role: "system", 
+                content: "", 
+                isLoading: true,
+                src: companion.src
+              }]);
+              
+              const thirdResponse = await fetch(`/api/chat/${companion.id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                  prompt: completion + "\n\n" + secondMessage,
+                  isFollowUp: true
+                }),
+              });
+              
+              const thirdMessage = await thirdResponse.text();
+              console.log("🤖 Third message received");
+              
+              setMessages((current) => {
+                const messages = current.filter(message => !message.isLoading);
+                return [...messages, {
+                  role: "system",
+                  content: thirdMessage,
+                  src: companion.src
+                }];
+              });
+              decrementRemaining();
+            }
+          } catch (error) {
+            setMessages((current) => current.filter(message => !message.isLoading));
+            console.error("❌ Error sending follow-up messages:", error);
+          }
+        }
+      }
+
+      router.refresh();
+    } catch (error) {
+      console.error("Failed to send message:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onClear = async (onClose: () => void) => {
+    try {
+      setIsClearingMessages(true);
+      await fetch(`/api/chat/${companion.id}`, {
+        method: 'DELETE',
+      });
+      
+      setMessages([]);
+      router.refresh();
+      onClose();
+    } catch (error) {
+      console.error("Failed to clear chat:", error);
+    } finally {
+      setIsClearingMessages(false);
+    }
+  };
 
   return (
     <div className="flex flex-col h-full p-4 space-y-2">
-      <ChatHeader companion={companion} />
+      <ChatHeader 
+        companion={companion} 
+        onClear={onClear}
+        isGroupChat={false}
+        isClearingMessages={isClearingMessages}
+      />
       <ChatMessages 
-        companion={companion}
         isLoading={isLoading}
         messages={messages}
       />
@@ -72,7 +193,7 @@ export const ChatClient = ({
         isLoading={isLoading} 
         input={input} 
         handleInputChange={handleInputChange} 
-        onSubmit={onSubmit} 
+        onSubmit={handleSubmit} 
       />
     </div>
    );

@@ -8,17 +8,14 @@ import { ChatMessage, ChatMessageProps } from "@/components/chat-message";
 interface ChatMessagesProps {
   messages: ChatMessageProps[];
   isLoading: boolean;
-  companion: Companion
 }
 
 export const ChatMessages = ({
   messages = [],
   isLoading,
-  companion,
 }: ChatMessagesProps) => {
   const scrollRef = useRef<ElementRef<"div">>(null);
-
-  const [fakeLoading, setFakeLoading] = useState(messages.length === 0 ? true : false);
+  const [fakeLoading, setFakeLoading] = useState(messages.length === 0);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -31,31 +28,42 @@ export const ChatMessages = ({
   }, []);
 
   useEffect(() => {
-    scrollRef?.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages.length]);
+    const scrollToBottom = () => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+    };
+
+    scrollToBottom();
+
+    const delayedScroll = setTimeout(scrollToBottom, 100);
+
+    return () => clearTimeout(delayedScroll);
+  }, [messages, isLoading]);
 
   return (
     <div className="flex-1 overflow-y-auto pr-4">
-      <ChatMessage
-        isLoading={fakeLoading}
-        src={companion.src}
-        role="system"
-        content={`Hello, I am ${companion.name}, ${companion.description}`}
-      />
-      {messages.map((message) => (
-        <ChatMessage
-          key={message.content}
-          src={companion.src}
-          content={message.content}
-          role={message.role}
-        />
+      {messages.map((message, index) => (
+        <div 
+          key={message.id || index} 
+          className={`flex ${message.role === "user" ? "justify-end flex-wrap" : "justify-start"} mb-2`}
+        >
+          <ChatMessage
+            src={message.role === "user" ? "" : message.src}
+            name={message.name}
+            content={message.content}
+            role={message.role}
+            isLoading={message.isLoading}
+          />
+        </div>
       ))}
       {isLoading && (
-        <ChatMessage
-          src={companion.src}
-          role="system"
-          isLoading
-        />
+        <div className="flex justify-start">
+          <ChatMessage
+            role="system"
+            isLoading
+          />
+        </div>
       )}
       <div ref={scrollRef} />
     </div>
