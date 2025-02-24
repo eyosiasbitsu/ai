@@ -65,6 +65,7 @@ export async function POST(req: Request) {
       3. Their typical interaction style
       4. Be at least 200 characters long
       5. Be written in second person ("You are...")
+      and if you don't know anything about ${name} make them have a personality of a humble friend
       `}`;
     }
 
