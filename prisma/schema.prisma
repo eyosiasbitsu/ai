@@ -20,9 +20,7 @@ model Companion {
   userName      String
   src           String
   name          String @db.Text
-  description   String
   instructions  String @db.Text
-  seed          String @db.Text
   private       Boolean @default(false)
   isFree        Boolean @default(false)
   messageDelay  Int     @default(0)  // Added: Delay in milliseconds between messages

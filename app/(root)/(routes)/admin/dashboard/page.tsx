@@ -108,7 +108,7 @@ export default function AdminDashboard() {
     if (!delayUpdateId) return;
 
     try {
-      const response = await fetch(`/api/admin/bots/${delayUpdateId}`, {
+      const response = await fetch(`/api/admin/bots/${delayUpdateId}/delay`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -155,7 +155,7 @@ export default function AdminDashboard() {
       <Modal
         isOpen={!!deleteId}
         onClose={() => setDeleteId(null)}
-        onConfirm={() => {}}
+        onConfirm={handleDelete}
         title="Delete Bot"
         description="Are you sure you want to delete this bot? This action cannot be undone."
       />

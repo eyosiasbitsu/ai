@@ -87,9 +87,6 @@ export const Companions = ({
                 <p className="font-semibold text-lg text-zinc-800 dark:text-foreground">
                   {item.name}
                 </p>
-                <p className="text-xs text-zinc-600 dark:text-muted-foreground line-clamp-2">
-                  {item.description}
-                </p>
               </CardHeader>
               <CardFooter className="flex items-center justify-between px-4 py-3 border-t border-zinc-300/50 dark:border-zinc-700 bg-[#BDBDBD] dark:bg-zinc-900/50 mt-auto">
                 <p className="text-xs text-zinc-600 dark:text-muted-foreground font-medium">@{item.userName}</p>

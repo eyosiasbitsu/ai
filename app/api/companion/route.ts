@@ -10,13 +10,13 @@ export async function POST(req: Request) {
   try {
     const user = await currentUser();
     const body = await req.json();
-    const { src, name, description, instructions, seed, categoryId } = body;
+    const { src, name, instructions, categoryId } = body;
 
     if (!user || !user.id || !user.firstName) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    if (!src || !name || !description || !instructions || !seed || !categoryId) {
+    if (!src || !name  || !instructions || !categoryId) {
       return new NextResponse("Missing required fields", { status: 400 });
     };
 
@@ -45,9 +45,7 @@ export async function POST(req: Request) {
         userName: user.firstName,
         src,
         name,
-        description,
         instructions,
-        seed,
       }
     });
 

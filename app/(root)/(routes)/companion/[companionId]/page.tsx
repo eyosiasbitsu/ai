@@ -34,7 +34,6 @@ const CompanionIdPage = ({
       setCompanion(data.companion);
       setCategories(data.categories);
     };
-
     fetchData();
   }, [userId, isAdmin, params.companionId, router]);
 

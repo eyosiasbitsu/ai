@@ -54,6 +54,7 @@
     "react-dom": "18.2.0",
     "react-form-stepper": "^2.0.3",
     "react-hook-form": "^7.45.2",
+    "react-icons": "^5.5.0",
     "react-spinners": "^0.13.8",
     "replicate": "^0.9.3",
     "stripe": "^12.14.0",
