@@ -10,7 +10,7 @@ export async function POST(req: Request) {
   try {
     const user = await currentUser();
     const body = await req.json();
-    const { src, name, instructions, categoryId } = body;
+    const { src, name, instructions, categoryId,private: isPrivate } = body;
 
     if (!user || !user.id || !user.firstName) {
       return new NextResponse("Unauthorized", { status: 401 });
@@ -46,6 +46,7 @@ export async function POST(req: Request) {
         src,
         name,
         instructions,
+        private: isPrivate,
       }
     });
 
