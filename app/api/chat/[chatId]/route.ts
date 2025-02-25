@@ -62,7 +62,7 @@ export async function POST(
     // Only include the companion intro for non-follow-up messages
     const systemMessage = isFollowUp 
       ? `Continue speaking in first person, using "I" statements. Build naturally upon your previous thoughts while maintaining your personality and perspective. Don't acknowledge or reference that these are follow-up messages - simply continue your train of thought as if you're still speaking.`
-      : `${companion.instructions}\n\nYou are ${companion.name}, ${companion.description}\n\nSeed personality: ${companion.seed}`;
+      : `${companion.instructions}\n\nYou are ${companion.name}, \n\nSeed personality: `;
 
     const [aiResponse] = await Promise.all([
       openai.chat.completions.create({

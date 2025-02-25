@@ -18,7 +18,6 @@ export async function GET() {
         id: true,
         name: true,
         src: true,
-        description: true
       },
       orderBy: {
         createdAt: 'desc'

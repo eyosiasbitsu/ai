@@ -113,7 +113,7 @@ export async function POST(
           {
             role: "user",
             content: `Message: "${prompt}"\n\nBots:\n${bots.map((bot, i) => 
-              `${i}: ${bot.name} - ${bot.description}`).join('\n')}`
+              `${i}: ${bot.name}`).join('\n')}`
           }
         ]
       });
@@ -137,7 +137,7 @@ export async function POST(
         messages: [
           {
             role: "system",
-            content: `${mainBot.instructions}\n\nYou are ${mainBot.name}, ${mainBot.description}.
+            content: `${mainBot.instructions}\n\nYou are ${mainBot.name},.
 Keep responses concise and casual, like texting (max 2-3 sentences).
 Be engaging but brief. No formal language or long explanations.`
           },
@@ -172,7 +172,7 @@ Be engaging but brief. No formal language or long explanations.`
             messages: [
               {
                 role: "system",
-                content: `${bot.instructions}\n\nYou are ${bot.name}, ${bot.description}.
+                content: `${bot.instructions}\n\nYou are ${bot.name},.
 Respond briefly to the conversation (1-2 sentences max).
 Keep it casual like texting. React naturally to what was said before.
 No formal language or lengthy responses.`
