@@ -111,7 +111,7 @@ export default function SubscribeClient({
   const onSubscribe = async () => {
     try {
       if (!userId || userId === "") {
-      return  router.push("/sign-in")
+      return  router.push("/")
       
       }
       setLoading(true);
