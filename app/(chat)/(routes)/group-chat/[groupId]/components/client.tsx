@@ -47,7 +47,7 @@ interface GroupChat {
 }
 
 interface GroupChatClientProps {
-  groupChat: GroupChat;
+  groupChat: any;
   initialLoad: boolean;
 }
 
@@ -266,7 +266,7 @@ export const GroupChatClient = ({
   const transformedMessages: ChatMessageProps[] = messages.map((message) => {
     if (message.isBot) {
       const companion = groupChat.members.find(
-        (m) => m.companion.id === message.senderId
+        (m:any) => m.companion.id === message.senderId
       )?.companion;
       return {
         id: message.id,
