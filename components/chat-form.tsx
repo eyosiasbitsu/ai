@@ -15,6 +15,7 @@ interface ChatFormProps {
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   isLoading: boolean;
   placeholder?: string;
+  onFocus?: () => void;
 }
 
 const MESSAGE_XP_COST = 2;
@@ -26,6 +27,7 @@ export const ChatForm = ({
   onSubmit,
   isLoading,
   placeholder = "Type a message",
+  onFocus,
 }: ChatFormProps) => {
   const proModal = useProModal();
   const { toast } = useToast();
@@ -85,6 +87,7 @@ export const ChatForm = ({
         onChange={handleInputChange}
         placeholder={placeholder}
         className="rounded-lg bg-primary/10"
+        onFocus={onFocus}
       />
       <Button 
         type="submit"

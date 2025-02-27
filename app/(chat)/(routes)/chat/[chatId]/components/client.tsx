@@ -177,6 +177,15 @@ export const ChatClient = ({
     }
   };
 
+  const handleInputFocus = () => {
+    setTimeout(() => {
+      window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: 'smooth'
+      });
+    }, 100);
+  };
+
   return (
     <div className="flex flex-col h-full p-4 space-y-2">
       <ChatHeader 
@@ -193,7 +202,8 @@ export const ChatClient = ({
         isLoading={isLoading} 
         input={input} 
         handleInputChange={handleInputChange} 
-        onSubmit={handleSubmit} 
+        onSubmit={handleSubmit}
+        onFocus={handleInputFocus}
       />
     </div>
    );
