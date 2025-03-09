@@ -27,7 +27,7 @@ export async function POST(
 
     // Check if user has enough XP
     const userUsage = await prismadb.userUsage.findUnique({
-      where: { userId: user.id }
+      where: { userId: user.id },
     });
 
     console.log("[GROUP_CHAT_POST] User usage:", userUsage);
@@ -39,9 +39,11 @@ export async function POST(
 
     if (userUsage.availableTokens < XP_PER_MESSAGE) {
       console.log("[GROUP_CHAT_POST] Insufficient XP");
-      return new NextResponse("Please purchase more XP to continue chatting", { 
+      return new NextResponse("Please purchase more XP to continue chatting", {
         status: 402,
-        statusText: `Need ${XP_PER_MESSAGE - userUsage.availableTokens} more XP`
+        statusText: `Need ${
+          XP_PER_MESSAGE - userUsage.availableTokens
+        } more XP`,
       });
     }
 
@@ -52,7 +54,7 @@ export async function POST(
         groupChatId: params.groupId,
         isBot: false,
         senderId: user.id,
-      }
+      },
     });
 
     console.log("[GROUP_CHAT_POST] User message saved:", userMessage);
@@ -62,9 +64,9 @@ export async function POST(
       where: { id: params.groupId },
       include: {
         members: {
-          include: { companion: true }
-        }
-      }
+          include: { companion: true },
+        },
+      },
     });
 
     console.log("[GROUP_CHAT_POST] Group chat:", groupChat);
@@ -76,57 +78,98 @@ export async function POST(
 
     // Select responding bots (max 3)
     let respondingBots: Companion[] = [];
-    
+
     // If a bot was mentioned, add it first
     if (mentionedBotId) {
-      const mentionedBot = groupChat.members.find(m => m.companion.id === mentionedBotId)?.companion;
+      const mentionedBot = groupChat.members.find(
+        (m) => m.companion.id === mentionedBotId
+      )?.companion;
       if (mentionedBot) {
         respondingBots.push(mentionedBot);
       }
     }
 
-    console.log("[GROUP_CHAT_POST] Responding bots:", respondingBots);
-
-    // Randomly select remaining bots (up to 3 total)
-    const remainingBots = groupChat.members
-      .map(m => m.companion)
-      .filter(bot => !respondingBots.some(rb => rb.id === bot.id));
-    
-    const shuffledBots = remainingBots.sort(() => Math.random() - 0.5);
-    respondingBots = [...respondingBots, ...shuffledBots.slice(0, 3 - respondingBots.length)];
-
-    console.log("[GROUP_CHAT_POST] Final responding bots:", respondingBots);
-
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY || "",
     });
 
-    // First, determine the most relevant bot to respond
-    const determineMainResponder = async (bots: Companion[], prompt: string, openai: OpenAI) => {
+    console.log("[GROUP_CHAT_POST] Responding bots:", respondingBots);
+
+    //Guarenteeing the mentioned bot is always in the responding bots array
+     //Extracting mentioned bot
+    const extractReferencedBot = async () => {
       const analysis = await openai.chat.completions.create({
         model: "gpt-4",
         messages: [
           {
             role: "system",
-            content: "Analyze which bot should be the main responder. Return only the index number (0 to N-1)."
+            content:
+              "Analyze which bot is mentioned in the mentioned and return only the index number (0 to N-1).",
           },
           {
             role: "user",
-            content: `Message: "${prompt}"\n\nBots:\n${bots.map((bot, i) => 
-              `${i}: ${bot.name}`).join('\n')}`
-          }
-        ]
+            content: `Message: "${prompt}"\n\nBots:\n${groupChat.members
+              .map((bot, i) => `${i}: ${bot.companion.name}`)
+              .join("\n")}`,
+          },
+        ],
       });
-      
-      const mainResponderIndex = parseInt(analysis.choices[0].message.content || "0");
+      const referencedBotIndex = parseInt(
+        analysis.choices[0].message.content || "0"
+      );
+      return groupChat.members[referencedBotIndex].companion;
+    };
+    const referencedBot=await extractReferencedBot()
+    respondingBots.push(referencedBot)
+
+    // Randomly select remaining bots (up to 3 total)
+    const remainingBots = groupChat.members
+      .map((m) => m.companion)
+      .filter((bot) => !respondingBots.some((rb) => rb.id === bot.id));
+
+    const shuffledBots = remainingBots.sort(() => Math.random() - 0.5);
+    respondingBots = [
+      ...respondingBots,
+      ...shuffledBots.slice(0, 3 - respondingBots.length),
+    ];
+
+    console.log("[GROUP_CHAT_POST] Final responding bots:", respondingBots);
+
+    // First, determine the most relevant bot to respond
+    const determineMainResponder = async (
+      bots: Companion[],
+      prompt: string,
+      openai: OpenAI
+    ) => {
+      const analysis = await openai.chat.completions.create({
+        model: "gpt-4",
+        messages: [
+          {
+            role: "system",
+            content:
+              "Analyze which bot should be the main responder. Return only the index number (0 to N-1).",
+          },
+          {
+            role: "user",
+            content: `Message: "${prompt}"\n\nBots:\n${bots
+              .map((bot, i) => `${i}: ${bot.name}`)
+              .join("\n")}`,
+          },
+        ],
+      });
+
+      const mainResponderIndex = parseInt(
+        analysis.choices[0].message.content || "0"
+      );
       return bots[mainResponderIndex];
     };
 
     // Process bot responses
     const processBotResponses = async () => {
       // Get main responder (unless a bot was mentioned)
-      const mainBot = mentionedBotId 
-        ? respondingBots.find(b => b.id === mentionedBotId)
+      // const mainBot = mentionedBotId
+      const mainBot=referencedBot
+        ? respondingBots.find((b) => b.id === referencedBot.id)
         : await determineMainResponder(respondingBots, prompt, openai);
 
       if (!mainBot) return [];
@@ -139,17 +182,17 @@ export async function POST(
             role: "system",
             content: `${mainBot.instructions}\n\nYou are ${mainBot.name},.
 Keep responses concise and casual, like texting (max 2-3 sentences).
-Be engaging but brief. No formal language or long explanations.`
+Be engaging but brief. No formal language or long explanations.`,
           },
           {
             role: "user",
-            content: prompt
-          }
-        ]
+            content: prompt,
+          },
+        ],
       });
 
       const mainContent = mainResponse.choices[0].message.content || "";
-      
+
       // Save main bot's message
       const mainMessage = await prismadb.groupMessage.create({
         data: {
@@ -157,16 +200,17 @@ Be engaging but brief. No formal language or long explanations.`
           groupChatId: params.groupId,
           isBot: true,
           senderId: mainBot.id,
-        }
+        },
       });
 
       const responses = [mainMessage];
 
       // Process other bots' responses
-      const otherBots = respondingBots.filter(b => b.id !== mainBot.id);
-      
+      const otherBots = respondingBots.filter((b) => b.id !== mainBot.id);
+
       for (const bot of otherBots) {
-        if (Math.random() < 0.5) { // 50% chance to respond
+        if (Math.random() < 0.5) {
+          // 50% chance to respond
           const followUpResponse = await openai.chat.completions.create({
             model: "gpt-4",
             messages: [
@@ -175,28 +219,29 @@ Be engaging but brief. No formal language or long explanations.`
                 content: `${bot.instructions}\n\nYou are ${bot.name},.
 Respond briefly to the conversation (1-2 sentences max).
 Keep it casual like texting. React naturally to what was said before.
-No formal language or lengthy responses.`
+No formal language or lengthy responses.`,
               },
               {
                 role: "user",
-                content: prompt
+                content: prompt,
               },
               {
                 role: "assistant",
-                content: mainContent
-              }
-            ]
+                content: mainContent,
+              },
+            ],
           });
 
-          const followUpContent = followUpResponse.choices[0].message.content || "";
-          
+          const followUpContent =
+            followUpResponse.choices[0].message.content || "";
+
           const botMessage = await prismadb.groupMessage.create({
             data: {
               content: followUpContent,
               groupChatId: params.groupId,
               isBot: true,
               senderId: bot.id,
-            }
+            },
           });
 
           responses.push(botMessage);
@@ -204,53 +249,57 @@ No formal language or lengthy responses.`
       }
 
       // Update XP for all responding bots
-      await Promise.all(responses.map(msg => 
-        prismadb.companion.update({
-          where: { id: msg.senderId },
-          data: { xpEarned: { increment: XP_PER_MESSAGE } }
-        })
-      ));
+      await Promise.all(
+        responses.map((msg) =>
+          prismadb.companion.update({
+            where: { id: msg.senderId },
+            data: { xpEarned: { increment: XP_PER_MESSAGE } },
+          })
+        )
+      );
 
       // Update user XP once for all responses
       const userUsage = await prismadb.userUsage.findUnique({
-        where: { userId: user.id }
+        where: { userId: user.id },
       });
 
-      const newTokens = Math.max(0, (userUsage?.availableTokens || 0) - (XP_PER_MESSAGE * responses.length));
+      const newTokens = Math.max(
+        0,
+        (userUsage?.availableTokens || 0) - XP_PER_MESSAGE * responses.length
+      );
 
       await prismadb.userUsage.update({
         where: { userId: user.id },
         data: {
           availableTokens: newTokens,
           totalSpent: { increment: XP_PER_MESSAGE * responses.length },
-        }
+        },
       });
 
       return responses;
     };
 
     const randomDelay = Math.floor(Math.random() * 4) * 1000; // Random delay between 0 and 3000 milliseconds
-    await new Promise(resolve => setTimeout(resolve, randomDelay)); // Introduce delay
+    await new Promise((resolve) => setTimeout(resolve, randomDelay)); // Introduce delay
 
     const botResponses = await processBotResponses();
 
     return NextResponse.json({
-      botMessages: botResponses.map(msg => ({
+      botMessages: botResponses.map((msg) => ({
         id: msg.id,
         content: msg.content,
         isBot: true,
         senderId: msg.senderId,
-        createdAt: msg.createdAt
+        createdAt: msg.createdAt,
       })),
       respondingBots: respondingBots
-        .filter(bot => botResponses.some(msg => msg.senderId === bot.id))
-        .map(bot => ({
+        .filter((bot) => botResponses.some((msg) => msg.senderId === bot.id))
+        .map((bot) => ({
           id: bot.id,
           name: bot.name,
-          messageDelay: bot.messageDelay
-        }))
+          messageDelay: bot.messageDelay,
+        })),
     });
-
   } catch (error) {
     console.log("[GROUP_CHAT_POST] Internal Error:", error);
     return new NextResponse("Internal Error", { status: 500 });
@@ -264,14 +313,16 @@ export async function DELETE(
   try {
     // Delete all messages for the specified group chat
     await prismadb.groupMessage.deleteMany({
-      where: { groupChatId: params.groupId }
+      where: { groupChatId: params.groupId },
     });
 
-    console.log(`[GROUP_CHAT_DELETE] Cleared messages for group chat: ${params.groupId}`);
+    console.log(
+      `[GROUP_CHAT_DELETE] Cleared messages for group chat: ${params.groupId}`
+    );
 
     return new NextResponse("Messages cleared", { status: 200 });
   } catch (error) {
     console.log("[GROUP_CHAT_DELETE] Error clearing messages:", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
-} 
+}
